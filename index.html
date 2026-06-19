@@ -225,9 +225,10 @@ function __loaderDone(){
   <div class="modal" style="width:440px">
     <div class="modal-title">公告</div>
     <div id="announceModalText" style="font-family:var(--mono);font-size:14px;line-height:1.9;color:var(--text);white-space:pre-wrap;max-height:50vh;overflow-y:auto;margin-bottom:18px"></div>
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--textd);margin-bottom:16px;cursor:pointer">
-      <input type="checkbox" id="announceDontShow" style="width:14px;height:14px;cursor:pointer">
-      下次更新前不再提示
+    <label class="announce-check" for="announceDontShow">
+      <input type="checkbox" id="announceDontShow">
+      <span class="announce-check-box"></span>
+      <span>下次更新前不再提示</span>
     </label>
     <button class="btn btn-full btn-teal" onclick="closeAnnounceModal()">关闭</button>
   </div>
