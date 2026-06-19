@@ -16,7 +16,7 @@
 body.__loading{overflow:hidden;}
 </style>
 <script>
-window.__loadTotal = 14;
+window.__loadTotal = 15;
 window.__loadDone = 0;
 function __loaderTick(){
   window.__loadDone++;
@@ -221,6 +221,18 @@ function __loaderDone(){
   </div>
 </div>
 
+<div class="modal-overlay" id="announceModalOverlay">
+  <div class="modal" style="width:440px">
+    <div class="modal-title">公告</div>
+    <div id="announceModalText" style="font-family:var(--mono);font-size:14px;line-height:1.9;color:var(--text);white-space:pre-wrap;max-height:50vh;overflow-y:auto;margin-bottom:18px"></div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--textd);margin-bottom:16px;cursor:pointer">
+      <input type="checkbox" id="announceDontShow" style="width:14px;height:14px;cursor:pointer">
+      下次更新前不再提示
+    </label>
+    <button class="btn btn-full btn-teal" onclick="closeAnnounceModal()">关闭</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="aboutModalOverlay">
   <div class="modal" style="width:480px">
     <div class="modal-title">关于</div>
@@ -278,6 +290,7 @@ function __loaderDone(){
 <script src="js/render-overview.js" onload="__loaderTick()"></script>
 <script src="js/render-detail.js" onload="__loaderTick()"></script>
 <script src="js/main-init.js" onload="__loaderTick()"></script>
+<script src="js/announce.js" onload="__loaderTick()"></script>
 
 <div class="site-footer" id="site-footer">
   <div class="footer-links">
