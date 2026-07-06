@@ -1,3 +1,15 @@
+//  __      __                                        __     
+// /\ \  __/\ \                                      /\ \    
+// \ \ \/\ \ \ \     __      ___      __    __  __   \_\ \   
+//  \ \ \ \ \ \ \  /'__`\  /' _ `\  /'_ `\ /\ \/\ \  /'_` \  
+//   \ \ \_/ \_\ \/\ \L\.\_/\ \/\ \/\ \L\ \\ \ \_\ \/\ \L\ \ 
+//    \ `\___x___/\ \__/.\_\ \_\ \_\ \____ \\/`____ \ \___,_\
+//     '\/__//__/  \/__/\/_/\/_/\/_/\/___L\ \`/___/> \/__,_ /
+//                                    /\____/   /\___/       
+//                                    \_/__/    \/__/         
+
+//核心代码！！！能跑就别乱动！！！！！
+
 // ══════════════════════════════════════
 // ALGORITHM
 // ══════════════════════════════════════
@@ -16,6 +28,8 @@ function predict(epsilonVec, targetTpl, fallbackEpsilonVec) {
     let e = epsilonVec[i];
     if (e == null && fallbackEpsilonVec) e = fallbackEpsilonVec[i];
     if (e == null) e = 0;
+    // 加这一行：ε 超出合理范围时截断，防止单天噪声放大
+    e = Math.max(-0.5, Math.min(0.5, e));
     return Math.round(g * (1 + targetTpl.coeff * e));
   });
 }
@@ -123,7 +137,9 @@ function analyzeItem(records) {
           intersection.set(key, val.residual < prev.residual ? val : prev);
         }
       });
-      candidateSet = intersection.size > 0 ? intersection : thisRound;
+      // 原来：candidateSet = intersection.size > 0 ? intersection : thisRound;
+      // 修复：交集为空则保留旧集合，本轮视为噪声跳过
+      if (intersection.size > 0) candidateSet = intersection;
     }
   }
 
@@ -151,7 +167,7 @@ function analyzeItem(records) {
   let fullEpsilonVec = best.epsilonVec;
   const completeWeeks = weekData.filter(w => w.prices.every(p => p != null));
   if (completeWeeks.length > 0) {
-    // 从完整周重新推导 ε（保证7天全不为 null）
+    // 从完整周重新推导 ε 也要保证7天全不为 null
     fullEpsilonVec = computeEpsilonVec(completeWeeks[completeWeeks.length - 1].prices, best.srcTpl);
   }
 

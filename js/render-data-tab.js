@@ -1,3 +1,15 @@
+//  __      __                                        __     
+// /\ \  __/\ \                                      /\ \    
+// \ \ \/\ \ \ \     __      ___      __    __  __   \_\ \   
+//  \ \ \ \ \ \ \  /'__`\  /' _ `\  /'_ `\ /\ \/\ \  /'_` \  
+//   \ \ \_/ \_\ \/\ \L\.\_/\ \/\ \/\ \L\ \\ \ \_\ \/\ \L\ \ 
+//    \ `\___x___/\ \__/.\_\ \_\ \_\ \____ \\/`____ \ \___,_\
+//     '\/__//__/  \/__/\/_/\/_/\/_/\/___L\ \`/___/> \/__,_ /
+//                                    /\____/   /\___/       
+//                                    \_/__/    \/__/         
+
+//数据和图像渲染相关的核心代码，能跑就别乱动！！！！
+
 // ══════════════════════════════════════
 // DATA TAB DYNAMIC DETAILS
 // ══════════════════════════════════════
@@ -223,7 +235,7 @@ function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek,
 
   const cs = getComputedStyle(document.documentElement);
 
-  const MONO_FONT = `'Share Tech Mono', monospace`;
+  const MONO_FONT = `'JetBrains Mono', monospace`;
 
   const GREEN = (
     cs.getPropertyValue('--green') || '#52d68a'

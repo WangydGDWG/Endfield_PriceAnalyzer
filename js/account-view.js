@@ -1,3 +1,13 @@
+//  __      __                                        __     
+// /\ \  __/\ \                                      /\ \    
+// \ \ \/\ \ \ \     __      ___      __    __  __   \_\ \   
+//  \ \ \ \ \ \ \  /'__`\  /' _ `\  /'_ `\ /\ \/\ \  /'_` \  
+//   \ \ \_/ \_\ \/\ \L\.\_/\ \/\ \/\ \L\ \\ \ \_\ \/\ \L\ \ 
+//    \ `\___x___/\ \__/.\_\ \_\ \_\ \____ \\/`____ \ \___,_\
+//     '\/__//__/  \/__/\/_/\/_/\/_/\/___L\ \`/___/> \/__,_ /
+//                                    /\____/   /\___/       
+//                                    \_/__/    \/__/         
+
 // ══════════════════════════════════════
 // NOTIFICATION
 // ══════════════════════════════════════
@@ -110,7 +120,6 @@ function updateAccountView() {
   const weekHtml = '<option value="">-- 选择周次 --</option>' + allWeeks.map(w=>`<option value="${esc(w)}">${esc(w)}</option>`).join('');
   sw.innerHTML = weekHtml; dsw.innerHTML = weekHtml;
 
-  // Keep hidden selects in sync with inp controls
   if (items.includes(pvi)) { si.value = pvi; dsi.value = pvi; inpi.value = pvi; }
   if (allWeeks.includes(pvw)) { sw.value = pvw; dsw.value = pvw; }
   
@@ -132,7 +141,6 @@ function onDataSelChange() {
   const week = document.getElementById('data-sel-week').value;
   document.getElementById('sel-item').value = item;
   document.getElementById('sel-week').value = week;
-  // Sync inp controls so entry form stays consistent
   if (item) document.getElementById('inp-item').value = item;
   if (week) document.getElementById('inp-week').value = week;
   renderTable();
@@ -144,13 +152,13 @@ function onInpWeekChange() {
   const item = document.getElementById('inp-item').value;
   const week = document.getElementById('inp-week').value;
 
-  // Sync all filter selects with the entry controls
+  // 向所有控制器同步物品
   document.getElementById('sel-item').value = item;
   document.getElementById('sel-week').value = week;
   document.getElementById('data-sel-item').value = item;
   document.getElementById('data-sel-week').value = week;
 
-  // When no week selected: clear and disable day inputs
+  // 未选中周数时禁止录入价格
   if (!week) {
     document.querySelectorAll('.day-inp').forEach(inp => {
       inp.value = '';
@@ -165,7 +173,7 @@ function onInpWeekChange() {
     return;
   }
 
-  // Week selected: re-enable day inputs
+  // 选中周数时再次开放录入
   document.querySelectorAll('.day-inp').forEach(inp => {
     inp.disabled = false;
     inp.style.opacity = '';
@@ -198,7 +206,6 @@ function onInpWeekChange() {
 }
 function onInpItemChange() {
   const item = document.getElementById('inp-item').value;
-  // Sync item selects immediately
   document.getElementById('sel-item').value = item;
   document.getElementById('data-sel-item').value = item;
   onInpWeekChange();

@@ -1,3 +1,13 @@
+//  __      __                                        __     
+// /\ \  __/\ \                                      /\ \    
+// \ \ \/\ \ \ \     __      ___      __    __  __   \_\ \   
+//  \ \ \ \ \ \ \  /'__`\  /' _ `\  /'_ `\ /\ \/\ \  /'_` \  
+//   \ \ \_/ \_\ \/\ \L\.\_/\ \/\ \/\ \L\ \\ \ \_\ \/\ \L\ \ 
+//    \ `\___x___/\ \__/.\_\ \_\ \_\ \____ \\/`____ \ \___,_\
+//     '\/__//__/  \/__/\/_/\/_/\/_/\/___L\ \`/___/> \/__,_ /
+//                                    /\____/   /\___/       
+//                                    \_/__/    \/__/         
+
 // ══════════════════════════════════════
 // EXPORT / IMPORT
 // ══════════════════════════════════════
@@ -118,3 +128,136 @@ function importData(event) {
   };
   reader.readAsText(file);
 }
+
+// ══════════════════════════════════════
+// BASE64 IMPORT / EXPORT（安卓兼容模式）
+// ══════════════════════════════════════
+
+// UTF-8 安全的 Base64 编解码
+function _toBase64UTF8(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(_, p1) {
+    return String.fromCharCode(parseInt(p1, 16));
+  }));
+}
+function _fromBase64UTF8(b64) {
+  try {
+    return decodeURIComponent(atob(b64).split('').map(function(c) {
+      return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+  } catch(e) {
+    throw new Error('Base64 解码失败，请确认文本完整无误');
+  }
+}
+
+// 从导出模态框生成 Base64 文本（替代下载文件）
+function confirmExportBase64() {
+  const selected = [...document.querySelectorAll('.export-check-item.selected')].map(i => i.dataset.acc);
+  if (!selected.length) { notify('请至少选择一个账号', 'var(--red)'); return; }
+  const d = load();
+  const payload = {
+    _type: 'ENDFIELD_PRICE_DATA',
+    _version: 5,
+    _exported: new Date().toISOString(),
+    _accounts_exported: selected,
+    accounts: selected,
+    accountMeta: Object.fromEntries(selected.map(a => [a, (d.accountMeta||{})[a]||{}])),
+    records: Object.fromEntries(selected.map(a => [a, (d.records||{})[a]||[]]))
+  };
+  const b64 = _toBase64UTF8(JSON.stringify(payload));
+  closeExportModal();
+  document.getElementById('b64ExportTextarea').value = b64;
+  document.getElementById('b64ExportInfo').textContent =
+    `已包含 ${selected.length} 个账号 · ${b64.length} 字符`;
+  document.getElementById('b64ExportModalOverlay').classList.add('open');
+}
+
+function closeB64ExportModal() {
+  document.getElementById('b64ExportModalOverlay').classList.remove('open');
+}
+
+function copyB64ExportText() {
+  const el = document.getElementById('b64ExportTextarea');
+  el.select();
+  el.setSelectionRange(0, 99999); // 兼容移动端
+  const text = el.value;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(function() { notify('已复制到剪贴板'); })
+      .catch(function() {
+        try { document.execCommand('copy'); notify('已复制到剪贴板'); }
+        catch(e) { notify('请手动长按文本框全选后复制', 'var(--red)'); }
+      });
+  } else {
+    try { document.execCommand('copy'); notify('已复制到剪贴板'); }
+    catch(e) { notify('请手动长按文本框全选后复制', 'var(--red)'); }
+  }
+}
+
+// 打开 Base64 导入弹窗
+function openB64ImportModal() {
+  document.getElementById('b64ImportTextarea').value = '';
+  document.getElementById('b64ImportModalOverlay').classList.add('open');
+  setTimeout(function() {
+    document.getElementById('b64ImportTextarea').focus();
+  }, 120);
+}
+
+function closeB64ImportModal() {
+  document.getElementById('b64ImportModalOverlay').classList.remove('open');
+}
+
+function confirmB64Import() {
+  const raw = document.getElementById('b64ImportTextarea').value.trim();
+  if (!raw) { notify('请粘贴 Base64 数据', 'var(--red)'); return; }
+  let payload;
+  try {
+    const json = _fromBase64UTF8(raw);
+    payload = JSON.parse(json);
+    if (payload._type !== 'ENDFIELD_PRICE_DATA') throw new Error('格式不匹配，请确认是否为本工具导出的数据');
+  } catch(err) {
+    notify('解析失败：' + err.message, 'var(--red)');
+    return;
+  }
+  const msg = '导入将与现有数据合并（相同账号的记录取并集）。\n导出时间：' + (payload._exported||'未知') +
+              '\n包含账号：' + (payload.accounts||[]).join(', ');
+  closeB64ImportModal();
+  openConfirmModal(msg, function() {
+    const cur = load();
+    const existAcc = cur.accounts||[];
+    const newAcc = payload.accounts||[];
+    const merged = [...new Set([...existAcc, ...newAcc])];
+    const curMeta = cur.accountMeta||{};
+    const newMeta = payload.accountMeta||{};
+    const mergedMeta = Object.assign({}, newMeta, curMeta);
+    const curRecs = cur.records||{};
+    const newRecs = payload.records||{};
+    const mergedRecs = Object.assign({}, curRecs);
+    Object.entries(newRecs).forEach(function([acc, recs]) {
+      if (!mergedRecs[acc]) { mergedRecs[acc] = recs; return; }
+      recs.forEach(function(nr) {
+        const existing = mergedRecs[acc].find(function(r) { return r.item===nr.item && r.week===nr.week; });
+        if (!existing) { mergedRecs[acc].push(nr); return; }
+        nr.prices.forEach(function(p, i) { if (existing.prices[i]==null && p!=null) existing.prices[i]=p; });
+      });
+    });
+    save({ accounts: merged, accountMeta: mergedMeta, records: mergedRecs });
+    renderHome();
+    notify('导入完成，共 ' + merged.length + ' 个账号');
+  });
+}
+
+// ══════════════════════════════════════
+// 导入下拉菜单控制
+// ══════════════════════════════════════
+function toggleImportDropdown() {
+  document.getElementById('importDropdownMenu').classList.toggle('open');
+}
+function closeImportDropdown() {
+  const m = document.getElementById('importDropdownMenu');
+  if (m) m.classList.remove('open');
+}
+// 点击菜单外部时关闭
+document.addEventListener('click', function(e) {
+  const dd = document.getElementById('importDropdown');
+  if (dd && !dd.contains(e.target)) closeImportDropdown();
+});

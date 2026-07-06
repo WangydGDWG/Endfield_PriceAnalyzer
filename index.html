@@ -1,3 +1,32 @@
+<!--
+ __      __                                        __     
+/\ \  __/\ \                                      /\ \    
+\ \ \/\ \ \ \     __      ___      __    __  __   \_\ \   
+ \ \ \ \ \ \ \  /'__`\  /' _ `\  /'_ `\ /\ \/\ \  /'_` \  
+  \ \ \_/ \_\ \/\ \L\.\_/\ \/\ \/\ \L\ \\ \ \_\ \/\ \L\ \ 
+   \ `\___x___/\ \__/.\_\ \_\ \_\ \____ \\/`____ \ \___,_\
+    '\/__//__/  \/__/\/_/\/_/\/_/\/___L\ \`/___/> \/__,_ /
+                                   /\____/   /\___/       
+                                   \_/__/    \/__/         -->
+
+<!--  
+ ______   ___   __    ______   ______   ________  ______   __       ______      
+/_____/\ /__/\ /__/\ /_____/\ /_____/\ /_______/\/_____/\ /_/\     /_____/\     
+\::::_\/_\::\_\\  \ \\:::_ \ \\::::_\/_\__.::._\/\::::_\/_\:\ \    \:::_ \ \    
+ \:\/___/\\:. `-\  \ \\:\ \ \ \\:\/___/\  \::\ \  \:\/___/\\:\ \    \:\ \ \ \   
+  \::___\/_\:. _    \ \\:\ \ \ \\:::._\/  _\::\ \__\::___\/_\:\ \____\:\ \ \ \  
+   \:\____/\\. \`-\  \ \\:\/.:| |\:\ \   /__\::\__/\\:\____/\\:\/___/\\:\/.:| | 
+    \_____\/ \__\/ \__\/ \____/_/ \_\/   \________\/ \_____\/ \_____\/ \____/_/ 
+                                                                                
+ ______   ______     ________    ______  ______   ________   ___   __    ________   __       __  __   ______  ______   ______       
+/_____/\ /_____/\   /_______/\  /_____/\/_____/\ /_______/\ /__/\ /__/\ /_______/\ /_/\     /_/\/_/\ /_____/\/_____/\ /_____/\      
+\:::_ \ \\:::_ \ \  \__.::._\/  \:::__\/\::::_\/_\::: _  \ \\::\_\\  \ \\::: _  \ \\:\ \    \ \ \ \ \\:::__\/\::::_\/_\:::_ \ \     
+ \:(_) \ \\:(_) ) )_   \::\ \      /: /  \:\/___/\\::(_)  \ \\:. `-\  \ \\::(_)  \ \\:\ \    \:\_\ \ \  /: /  \:\/___/\\:(_) ) )_   
+  \: ___\/ \: __ `\ \  _\::\ \__  /::/___ \::___\/_\:: __  \ \\:. _    \ \\:: __  \ \\:\ \____\::::_\/ /::/___ \::___\/_\: __ `\ \  
+   \ \ \    \ \ `\ \ \/__\::\__/\/_:/____/\\:\____/\\:.\ \  \ \\. \`-\  \ \\:.\ \  \ \\:\/___/\ \::\ \/_:/____/\\:\____/\\ \ `\ \ \ 
+    \_\/     \_\/ \_\/\________\/\_______\/ \_____\/ \__\/\__\/ \__\/ \__\/ \__\/\__\/ \_____\/  \__\/\_______\/ \_____\/ \_\/ \_\/ 
+ -->    
+                                                                                                                                
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -7,7 +36,7 @@
 <link rel="icon" type="image/png" href="/icon.png">
 <link rel="stylesheet" href="css/style.css" onload="__loaderTick()">
 <style>
-#__loader{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:'Share Tech Mono',monospace;transition:opacity .4s ease;}
+#__loader{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:'JetBrains Mono',monospace;transition:opacity .4s ease;}
 #__loader.__loader-hide{opacity:0;pointer-events:none;}
 #__loaderTitle{color:#fff;font-size:13px;letter-spacing:.3em;text-transform:uppercase;opacity:.8;}
 #__loaderTrack{width:240px;height:2px;background:#2a2a2a;position:relative;overflow:hidden;}
@@ -59,9 +88,19 @@ function __loaderDone(){
   <div class="accounts-area">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div class="section-label" style="margin-bottom:0">账号</div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;align-items:center">
         <button class="btn btn-sm" onclick="openExportModal()">↑ 导出数据</button>
-        <button class="btn btn-sm btn-teal" onclick="document.getElementById('importFile').click()">↓ 导入数据</button>
+        <div class="import-dropdown" id="importDropdown">
+          <button class="btn btn-sm btn-teal" onclick="toggleImportDropdown()">↓ 导入数据 ▾</button>
+          <div class="import-dropdown-menu" id="importDropdownMenu">
+            <button class="import-dropdown-item" onclick="document.getElementById('importFile').click();closeImportDropdown()">
+              <span>文件导入</span><span class="import-dropdown-hint">.efdata</span>
+            </button>
+            <button class="import-dropdown-item" onclick="openB64ImportModal();closeImportDropdown()">
+              <span>Base64 导入</span><span class="import-dropdown-hint">安卓兼容</span>
+            </button>
+          </div>
+        </div>
         <input type="file" id="importFile" accept=".efdata" style="display:none" onchange="importData(event)">
       </div>
     </div>
@@ -212,11 +251,14 @@ function __loaderDone(){
   <div class="export-modal">
     <div class="modal-title">选择要导出的账号</div>
     <button class="modal-close" onclick="closeExportModal()">✕</button>
-    <div class="export-check-list" id="exportCheckList"></div>
-    <div class="export-footer">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <span class="export-sel-count" id="exportSelCount">已选 0 个</span>
       <button class="btn btn-sm" onclick="toggleSelectAll()">全选 / 取消</button>
-      <button class="btn btn-sm btn-teal" onclick="confirmExport()">↑ 确认导出</button>
+    </div>
+    <div class="export-check-list" id="exportCheckList"></div>
+    <div class="export-footer">
+      <button class="btn btn-sm" onclick="confirmExportBase64()" style="border-color:var(--teal);color:var(--teal)" title="生成Base64文本，适用于安卓等不支持文件下载的环境">↑ Base64</button>
+      <button class="btn btn-sm btn-teal" onclick="confirmExport()">↑ 下载文件</button>
     </div>
   </div>
 </div>
@@ -241,7 +283,7 @@ function __loaderDone(){
     <div style="font-family:var(--mono);font-size:14px;line-height:2;color:var(--text)">
       <div style="margin-bottom:8px">网页名称：<span style="color:var(--textb)">终末地 · 弹性物资价格逆向分析工具</span></div>
       <div style="margin-bottom:8px">版本号：<span style="color:var(--textb)">v5</span></div>
-      <div style="margin-bottom:8px">更新时间：<span style="color:var(--textb)">2026-06-21</span></div>
+      <div style="margin-bottom:8px">更新时间：<span style="color:var(--textb)">2026-07-06</span></div>
       <div style="margin-bottom:8px;margin-top:16px;border-top:1px solid var(--border);padding-top:16px">开发者：<a href="https://space.bilibili.com/609322802" target="_blank" style="color:var(--teal);text-decoration:none">@Wangyd</a></div>
       <div style="margin-bottom:8px">鸣谢：
         <a href="https://space.bilibili.com/3706929100622426" target="_blank" style="color:var(--teal);text-decoration:none">@小杯基建研究会</a>
@@ -293,6 +335,7 @@ function __loaderDone(){
 <script src="js/render-detail.js" onload="__loaderTick()"></script>
 <script src="js/main-init.js" onload="__loaderTick()"></script>
 <script src="js/announce.js" onload="__loaderTick()"></script>
+<script src="js/android-platform.js"></script>
 
 <div class="site-footer" id="site-footer">
   <div class="footer-links">
@@ -306,5 +349,59 @@ function __loaderDone(){
 </div>
 
 <script src="js/footer.js"></script>
+
+<!-- ══════════════════════════════════
+     Base64 导出结果弹窗
+     ══════════════════════════════════ -->
+<div class="modal-overlay" id="b64ExportModalOverlay">
+  <div class="modal" style="width:500px;max-width:95vw">
+    <div class="modal-title">Base64 导出结果</div>
+    <button class="modal-close" onclick="closeB64ExportModal()">&#10005;</button>
+    <div id="b64ExportInfo" style="font-size:12px;color:var(--textd);margin-bottom:10px;font-family:var(--mono);letter-spacing:.5px"></div>
+    <textarea id="b64ExportTextarea" readonly
+      style="width:100%;height:150px;font-family:var(--mono);font-size:11px;line-height:1.6;resize:none;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;box-sizing:border-box;word-break:break-all;outline:none;display:block"></textarea>
+    <div style="font-size:12px;color:var(--textd);margin:10px 0 14px;line-height:1.7">
+      将上方文本复制后，在目标设备上点击「&#8595; Base64 导入」并粘贴，即可恢复数据。<br>
+      <span style="color:var(--accent)">安卓设备：</span>长按文本框 &rarr; 全选 &rarr; 复制。
+    </div>
+    <button class="btn btn-full btn-teal" onclick="copyB64ExportText()">复制到剪贴板</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     Base64 导入弹窗
+     ══════════════════════════════════ -->
+<div class="modal-overlay" id="b64ImportModalOverlay">
+  <div class="modal" style="width:500px;max-width:95vw">
+    <div class="modal-title">Base64 导入</div>
+    <button class="modal-close" onclick="closeB64ImportModal()">&#10005;</button>
+    <div style="font-size:12px;color:var(--textd);margin-bottom:10px;line-height:1.7">
+      将从其他设备复制的 Base64 文本粘贴到下方，然后点击「确认导入」。<br>
+      导入将与现有数据<span style="color:var(--textb)">合并</span>，不会覆盖已有账号。
+    </div>
+    <textarea id="b64ImportTextarea" placeholder="粘贴 Base64 文本..."
+      style="width:100%;height:150px;font-family:var(--mono);font-size:11px;line-height:1.6;resize:none;background:var(--bg3);border:1px solid var(--border);color:var(--textb);padding:10px;box-sizing:border-box;word-break:break-all;outline:none;display:block;transition:border-color .2s"
+      onfocus="this.style.borderColor='var(--accent)'"
+      onblur="this.style.borderColor='var(--border)'"></textarea>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-full btn-teal" onclick="confirmB64Import()" style="flex:2">确认导入</button>
+      <button class="btn btn-full" onclick="closeB64ImportModal()" style="flex:1">取消</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 安卓 WebView 环境检测 ──────────────────────────
+(function() {
+  var ua = navigator.userAgent || '';
+  var isWV = /Android/.test(ua) && (/\bwv\b/.test(ua) || (!/Chrome\/\d/.test(ua) && /Version\/\d/.test(ua)));
+  if (isWV || typeof AndroidBridge !== 'undefined') {
+    document.body.classList.add('android-webview');
+  }
+  setTimeout(function() {
+    if (typeof AndroidBridge !== 'undefined') document.body.classList.add('android-webview');
+  }, 1500);
+})();
+</script>
 </body>
 </html>

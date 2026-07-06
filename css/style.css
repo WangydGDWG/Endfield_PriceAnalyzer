@@ -1,10 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Share+Tech+Mono&display=swap');
+/*  __      __                                        __     
+// /\ \  __/\ \                                      /\ \    
+// \ \ \/\ \ \ \     __      ___      __    __  __   \_\ \   
+//  \ \ \ \ \ \ \  /'__`\  /' _ `\  /'_ `\ /\ \/\ \  /'_` \  
+//   \ \ \_/ \_\ \/\ \L\.\_/\ \/\ \/\ \L\ \\ \ \_\ \/\ \L\ \ 
+//    \ `\___x___/\ \__/.\_\ \_\ \_\ \____ \\/`____ \ \___,_\
+//     '\/__//__/  \/__/\/_/\/_/\/_/\/___L\ \`/___/> \/__,_ /
+//                                    /\____/   /\___/       
+//                                    \_/__/    \/__/          */
+
+
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 :root{
   --bg:#080a0e;--bg2:#0e1117;--bg3:#161b24;--bg4:#1d2330;
   --border:#252c3a;--borderb:#323c50;
   --accent:#e8b84b;--teal:#3dd9b3;--red:#e05c6a;--blue:#5b9cf6;--green:#52d68a;
   --text:#b8c0d0;--textd:#58647a;--textb:#edf0f7;
-  --mono:'Share Tech Mono',monospace;--sans:'Noto Sans SC',sans-serif;--disp:'Rajdhani',sans-serif;
+  --tag-medium:#5b9cf6;--tag-large:#e8b84b;--tag-xlarge:#e05c6a;
+  --mono:'JetBrains Mono',monospace;--sans:'Noto Sans SC',sans-serif;--disp:'Rajdhani',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;overflow-x:hidden;min-width:320px}
@@ -235,11 +247,21 @@ select option{background:var(--bg3)}
 /* OVERVIEW TAB */
 .ov-body{padding:24px 32px}
 .ov-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
-.ov-card{background:var(--bg2);border:1px solid var(--border);position:relative;overflow:hidden}
+.ov-card{background:var(--bg2);border:1px solid var(--border);position:relative;overflow:hidden;transition:transform .15s,opacity .15s,border-color .15s}
 .ov-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--teal),transparent)}
 .ov-card.locked::before{background:linear-gradient(90deg,var(--green),transparent)}
+.ov-card.dragging{opacity:.4;border-color:var(--accent)}
+.ov-card.drag-over{border-color:var(--teal);transform:scale(1.01)}
 .ov-card-header{padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.ov-drag-handle{cursor:grab;color:var(--textd);font-size:14px;padding:2px 4px;user-select:none;-webkit-user-select:none;touch-action:none;letter-spacing:-1px;-webkit-user-drag:element;user-drag:element}
+.ov-drag-handle:active{cursor:grabbing;color:var(--textb)}
 .ov-item-name{font-family:var(--disp);font-size:16px;font-weight:700;color:var(--textb);letter-spacing:1px;display:flex;align-items:center;gap:6px}
+.ov-tag{font-family:var(--mono);font-size:10px;letter-spacing:.5px;padding:2px 6px;border:1px solid;border-radius:2px;cursor:pointer;user-select:none;white-space:nowrap;transition:opacity .15s}
+.ov-tag:hover{opacity:.75}
+.ov-tag.tag-medium{color:var(--tag-medium);border-color:var(--tag-medium)}
+.ov-tag.tag-large{color:var(--tag-large);border-color:var(--tag-large)}
+.ov-tag.tag-xlarge{color:var(--tag-xlarge);border-color:var(--tag-xlarge)}
+.ov-tag.tag-none{color:var(--textd);border-color:var(--border);border-style:dashed}
 .ov-rename-btn{background:none;border:none;color:var(--textd);cursor:pointer;font-size:12px;transition:color .2s;}
 .ov-rename-btn:hover{color:var(--accent)}
 .ov-status{font-family:var(--mono);font-size:11px;border:1px solid;padding:1px 7px}
@@ -759,4 +781,97 @@ table{max-width:100%}
   .modal, .export-modal { width: min(96vw, 360px) !important; padding: 14px !important; }
   
   .floating-del-btn{bottom:16px;right:10px;font-size:11px;padding:6px 10px}
+}
+
+/* ══════════════════════════════════════
+   Base64 弹窗内 textarea 通用样式
+   ══════════════════════════════════════ */
+textarea {
+  font-family: var(--mono);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--textb);
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+  resize: vertical;
+  transition: border-color .2s;
+  -webkit-appearance: none;
+}
+textarea:focus { border-color: var(--accent); }
+textarea::placeholder { color: var(--textd); }
+
+/* ══════════════════════════════════════
+   安卓 WebView 模式提示标记
+   （body.android-webview 时可在此添加
+     额外样式，如隐藏文件按钮等）
+   ══════════════════════════════════════ */
+body.android-webview .io-file-only {
+  display: none !important;
+}
+
+/* ══════════════════════════════════════
+   导入数据 下拉菜单
+   ══════════════════════════════════════ */
+.import-dropdown {
+  position: relative;
+}
+.import-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  background: var(--bg3);
+  border: 1px solid var(--teal);
+  min-width: 170px;
+  z-index: 600;
+  box-shadow: 0 6px 20px rgba(0,0,0,.5);
+}
+.import-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--teal);
+}
+.import-dropdown-menu.open {
+  display: block;
+}
+.import-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+  letter-spacing: .3px;
+}
+.import-dropdown-item:last-child {
+  border-bottom: none;
+}
+.import-dropdown-item:hover {
+  background: rgba(82,214,138,.08);
+  color: var(--teal);
+}
+.import-dropdown-hint {
+  font-size: 11px;
+  color: var(--textd);
+  margin-left: 14px;
+  letter-spacing: .5px;
+  flex-shrink: 0;
+}
+.import-dropdown-item:hover .import-dropdown-hint {
+  color: var(--teal);
+  opacity: .6;
 }

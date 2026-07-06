@@ -1,3 +1,13 @@
+//  __      __                                        __     
+// /\ \  __/\ \                                      /\ \    
+// \ \ \/\ \ \ \     __      ___      __    __  __   \_\ \   
+//  \ \ \ \ \ \ \  /'__`\  /' _ `\  /'_ `\ /\ \/\ \  /'_` \  
+//   \ \ \_/ \_\ \/\ \L\.\_/\ \/\ \/\ \L\ \\ \ \_\ \/\ \L\ \ 
+//    \ `\___x___/\ \__/.\_\ \_\ \_\ \____ \\/`____ \ \___,_\
+//     '\/__//__/  \/__/\/_/\/_/\/_/\/___L\ \`/___/> \/__,_ /
+//                                    /\____/   /\___/       
+//                                    \_/__/    \/__/         
+
 function openAboutModal() {
   document.getElementById('aboutModalOverlay').classList.add('open');
 }
@@ -18,7 +28,7 @@ function closeInputModal() {
 }
 function confirmInputModal() {
   const val = document.getElementById('inputModalField').value;
-  // 【核心修复】先转存 callback 引用，防止被 close 函数清除
+  // 先转存 callback 引用，防止被 close 函数清除
   const cb = _inputModalCallback;
   closeInputModal();
   if (cb) { cb(val); }
@@ -39,7 +49,7 @@ function closeConfirmModal() {
   _confirmModalCallback = null;
 }
 function doConfirmModal() {
-  // 修正引用丢失BUG：先转存callback，再关闭弹窗
+  // 先转存callback，再关闭弹窗
   const cb = _confirmModalCallback;
   closeConfirmModal();
   if (cb) { cb(); }

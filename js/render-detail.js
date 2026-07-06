@@ -1,5 +1,15 @@
+//  __      __                                        __     
+// /\ \  __/\ \                                      /\ \    
+// \ \ \/\ \ \ \     __      ___      __    __  __   \_\ \   
+//  \ \ \ \ \ \ \  /'__`\  /' _ `\  /'_ `\ /\ \/\ \  /'_` \  
+//   \ \ \_/ \_\ \/\ \L\.\_/\ \/\ \/\ \L\ \\ \ \_\ \/\ \L\ \ 
+//    \ `\___x___/\ \__/.\_\ \_\ \_\ \____ \\/`____ \ \___,_\
+//     '\/__//__/  \/__/\/_/\/_/\/_/\/___L\ \`/___/> \/__,_ /
+//                                    /\____/   /\___/       
+//                                    \_/__/    \/__/         
+
 // ══════════════════════════════════════
-// RENDER DETAIL (只保留底层机制说明)
+// RENDER DETAIL 
 // ══════════════════════════════════════
 function renderDetail() {
   const container = document.getElementById('detail-body');
@@ -9,18 +19,18 @@ function renderDetail() {
   html += `<div class="detail-section">
     <div class="detail-section-title">§ 1 · 算法公式说明</div>
     <div class="formula-box">
-      <div class="fml-comment">// 价格生成公式（正向）</div>
+      <div class="fml-comment">// 价格生成公式（YJ的小杯代码）</div>
       <div><span class="fml-key">P<sub>i</sub></span> = <span class="fml-val">T<sup>(n)</sup><sub>i</sub></span> × ( 1 + <span class="fml-val">X<sup>(n)</sup></span> × <span class="fml-key">ε<sub>i</sub></span> )</div>
-      <div style="margin-top:8px" class="fml-comment">// ε 反推公式（逆向，从实测价格求个人系数）</div>
+      <div style="margin-top:8px" class="fml-comment">// ε 反推公式</div>
       <div><span class="fml-key">ε<sub>i</sub></span> = ( <span class="fml-val">P<sub>i</sub></span> / <span class="fml-val">T<sup>(n)</sup><sub>i</sub></span> − 1 ) / <span class="fml-val">X<sup>(n)</sup></span></div>
-      <div style="margin-top:8px" class="fml-comment">// 残差评分（归一化均方值，越小越匹配）</div>
+      <div style="margin-top:8px" class="fml-comment">// 残差评分（归一化均方值，越小越好）</div>
       <div>residual = <span class="fml-key">mean</span>( ( <span class="fml-val">P<sub>predicted</sub></span> − <span class="fml-val">P<sub>actual</sub></span> )<sup>2</sup> / <span class="fml-val">P<sub>actual</sub></span><sup>2</sup> )</div>
-      <div style="margin-top:8px" class="fml-comment">// RMSE 展示值（在 UI 中开方并转为百分比）</div>
+      <div style="margin-top:8px" class="fml-comment">// RMSE</div>
       <div>RMSE% = √<span class="fml-result">residual</span> × 100%</div>
     </div>
     <div class="def-grid">
       <div class="def-term">P<sub>i</sub></div><div class="def-desc">第 i 天的实际价格（玩家观测值）</div>
-      <div class="def-term">T<sup>(n)</sup><sub>i</sub></div><div class="def-desc">第 n 号模板第 i 天的格点价格（全服固定，整百数），定义在 <code style="color:var(--accent)">TEMPLATES[i].grid</code></div>
+      <div class="def-term">T<sup>(n)</sup><sub>i</sub></div><div class="def-desc">第 n 号模板第 i 天的格点价格（全服固定），定义在 <code style="color:var(--accent)">TEMPLATES[i].grid</code></div>
       <div class="def-term">X<sup>(n)</sup></div><div class="def-desc">第 n 号模板的偏差系数（只取 4 / 5 / 6），定义在 <code style="color:var(--accent)">TEMPLATES[i].coeff</code></div>
       <div class="def-term">ε<sub>i</sub></div><div class="def-desc">标准化相对偏差向量的第 i 个分量，每人每物品初始化时固定，跨周不变</div>
       <div class="def-term">n</div><div class="def-desc">本周随机选取的模板编号（1–8），每周独立随机</div>
@@ -28,7 +38,7 @@ function renderDetail() {
   </div>`;
 
   html += `<div class="detail-section">
-    <div class="detail-section-title">§ 2 · 核心算法函数实现</div>
+    <div class="detail-section-title">§ 2 · 工具核心算法函数实现</div>
     
     <div class="detail-fn-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:12px;margin-bottom:20px">
       
