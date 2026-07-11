@@ -70,12 +70,14 @@ function confirmExport() {
   const d = load();
   const payload = {
     _type: 'ENDFIELD_PRICE_DATA',
-    _version: 5,
+    _version: 6,
     _exported: new Date().toISOString(),
     _accounts_exported: selected,
     accounts: selected,
     accountMeta: Object.fromEntries(selected.map(a => [a, (d.accountMeta||{})[a]||{}])),
-    records: Object.fromEntries(selected.map(a => [a, (d.records||{})[a]||[]]))
+    records: Object.fromEntries(selected.map(a => [a, (d.records||{})[a]||[]])),
+    itemOrder: Object.fromEntries(selected.map(a => [a, (d.itemOrder||{})[a]||[]])),
+    itemMeta: Object.fromEntries(selected.map(a => [a, (d.itemMeta||{})[a]||{}]))
   };
   const json = JSON.stringify(payload, null, 2);
   const blob = new Blob([json], {type:'application/json'});
@@ -117,7 +119,20 @@ function importData(event) {
             nr.prices.forEach((p,i) => { if (existing.prices[i]==null && p!=null) existing.prices[i]=p; });
           });
         });
-        save({ accounts: merged, accountMeta: mergedMeta, records: mergedRecs });
+        const curOrder = cur.itemOrder||{};
+        const newOrder = payload.itemOrder||{};
+        const mergedOrder = {...curOrder};
+        Object.entries(newOrder).forEach(([acc, order]) => {
+          if (!mergedOrder[acc] || !mergedOrder[acc].length) { mergedOrder[acc] = order; return; }
+          mergedOrder[acc] = [...new Set([...mergedOrder[acc], ...order])];
+        });
+        const curItemMeta = cur.itemMeta||{};
+        const newItemMeta = payload.itemMeta||{};
+        const mergedItemMeta = {...curItemMeta};
+        Object.entries(newItemMeta).forEach(([acc, meta]) => {
+          mergedItemMeta[acc] = {...(meta||{}), ...(mergedItemMeta[acc]||{})};
+        });
+        save({ accounts: merged, accountMeta: mergedMeta, records: mergedRecs, itemOrder: mergedOrder, itemMeta: mergedItemMeta });
         renderHome();
         notify(`导入完成，共 ${merged.length} 个账号`);
       });
@@ -156,12 +171,14 @@ function confirmExportBase64() {
   const d = load();
   const payload = {
     _type: 'ENDFIELD_PRICE_DATA',
-    _version: 5,
+    _version: 6,
     _exported: new Date().toISOString(),
     _accounts_exported: selected,
     accounts: selected,
     accountMeta: Object.fromEntries(selected.map(a => [a, (d.accountMeta||{})[a]||{}])),
-    records: Object.fromEntries(selected.map(a => [a, (d.records||{})[a]||[]]))
+    records: Object.fromEntries(selected.map(a => [a, (d.records||{})[a]||[]])),
+    itemOrder: Object.fromEntries(selected.map(a => [a, (d.itemOrder||{})[a]||[]])),
+    itemMeta: Object.fromEntries(selected.map(a => [a, (d.itemMeta||{})[a]||{}]))
   };
   const b64 = _toBase64UTF8(JSON.stringify(payload));
   closeExportModal();
@@ -240,7 +257,20 @@ function confirmB64Import() {
         nr.prices.forEach(function(p, i) { if (existing.prices[i]==null && p!=null) existing.prices[i]=p; });
       });
     });
-    save({ accounts: merged, accountMeta: mergedMeta, records: mergedRecs });
+    const curOrder = cur.itemOrder||{};
+    const newOrder = payload.itemOrder||{};
+    const mergedOrder = Object.assign({}, curOrder);
+    Object.entries(newOrder).forEach(function([acc, order]) {
+      if (!mergedOrder[acc] || !mergedOrder[acc].length) { mergedOrder[acc] = order; return; }
+      mergedOrder[acc] = [...new Set([...mergedOrder[acc], ...order])];
+    });
+    const curItemMeta = cur.itemMeta||{};
+    const newItemMeta = payload.itemMeta||{};
+    const mergedItemMeta = Object.assign({}, curItemMeta);
+    Object.entries(newItemMeta).forEach(function([acc, meta]) {
+      mergedItemMeta[acc] = Object.assign({}, meta||{}, mergedItemMeta[acc]||{});
+    });
+    save({ accounts: merged, accountMeta: mergedMeta, records: mergedRecs, itemOrder: mergedOrder, itemMeta: mergedItemMeta });
     renderHome();
     notify('导入完成，共 ' + merged.length + ' 个账号');
   });
