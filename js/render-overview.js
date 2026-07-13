@@ -16,12 +16,9 @@
 function initOverview() {
   const sel = document.getElementById('ov-week-sel');
   const stdWeeks = buildWeekOptions();
-  const recs = getRecords(currentAccount);
-  const recordedWeeks = [...new Set(recs.map(r => r.week))];
-  const allWeeks = [...new Set([...stdWeeks, ...recordedWeeks])];
   const prevVal = sel.value;
-  sel.innerHTML = allWeeks.map(w => `<option value="${esc(w)}">${shortWeekLabel(w)}</option>`).join('');
-  if (allWeeks.includes(prevVal)) sel.value = prevVal;
+  sel.innerHTML = stdWeeks.map(w => `<option value="${esc(w)}">${shortWeekLabel(w)}</option>`).join('');
+  if (stdWeeks.includes(prevVal)) sel.value = prevVal;
   renderOverview();
 }
 

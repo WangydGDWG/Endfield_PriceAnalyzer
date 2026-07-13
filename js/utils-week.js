@@ -52,6 +52,20 @@ function weekLabel(offset) {
   const wn = getWeekNumber(mon);
   return `${y}-${m}-${d}（第${wn}周）`;
 }
+// 将 weekLabel 生成的字符串（如 "2026-7-6（第28周）"）解析为可比较的时间戳
+// 用于按真实时间顺序排序，而不是依赖数组/录入顺序
+function parseWeekToTime(w) {
+  if (!w) return 0;
+  const m = String(w).match(/^(\d+)-(\d+)-(\d+)/);
+  if (!m) return 0;
+  const y = parseInt(m[1], 10), mo = parseInt(m[2], 10), d = parseInt(m[3], 10);
+  return Date.UTC(y, mo - 1, d);
+}
+function sortByWeek(list, weekKey) {
+  const key = weekKey || (x => x.week);
+  return [...list].sort((a, b) => parseWeekToTime(key(a)) - parseWeekToTime(key(b)));
+}
+
 function buildWeekOptions() {
   const opts = [];
   for (let i = 0; i >= -4; i--) opts.push(weekLabel(i));

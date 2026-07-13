@@ -96,7 +96,10 @@ function filterEightPredictions(eightPredictions, currentWeekPrices) {
 
 function analyzeItem(records) {
   if (!records.length) return null;
-  const weekData = records.map(r => ({ week: r.week, prices: r.prices }));
+  // 必须按真实周次时间顺序排列，不能依赖 records 的录入/存储顺序，
+  // 否则相邻下标配对（w1, w2）会配到时间上不相邻的两周，导致候选集收敛错误
+  const sortedRecords = sortByWeek(records, r => r.week);
+  const weekData = sortedRecords.map(r => ({ week: r.week, prices: r.prices }));
 
   if (weekData.length === 1) {
     const candidates = enumEpsilonCandidates(weekData[0].prices);
