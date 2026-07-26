@@ -38,3 +38,18 @@ function setItemTag(acc, item, size){
   meta[item].size = size;
   saveItemMeta(acc, meta);
 }
+
+// ══════════════════════════════════════
+// PRICE RANGE BY TAG（超限标红阈值）
+// 适中:500-5100  较大:400-5300  极大:300-5500  未设置Tag:默认300-5500
+// ══════════════════════════════════════
+const TAG_PRICE_RANGES = {
+  medium: { min: 500, max: 5100 },
+  large:  { min: 400, max: 5300 },
+  xlarge: { min: 300, max: 5500 },
+};
+const DEFAULT_PRICE_RANGE = { min: 300, max: 5500 };
+function getItemPriceRange(acc, item) {
+  const tag = getItemTag(acc, item);
+  return TAG_PRICE_RANGES[tag] || DEFAULT_PRICE_RANGE;
+}

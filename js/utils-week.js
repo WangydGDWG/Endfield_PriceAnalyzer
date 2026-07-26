@@ -66,6 +66,35 @@ function sortByWeek(list, weekKey) {
   return [...list].sort((a, b) => parseWeekToTime(key(a)) - parseWeekToTime(key(b)));
 }
 
+// ══════════════════════════════════════
+// GAME-DAY REFRESH LOGIC
+// 游戏每天凌晨4点刷新数据；凌晨0-4点仍按"上一天"计算
+// ══════════════════════════════════════
+const CN_WEEKDAYS = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+
+// 是否处于凌晨0-4点的"数据未刷新"窗口
+function isPreRefreshWindow(now) {
+  const n = now || new Date();
+  return n.getHours() >= 0 && n.getHours() < 4;
+}
+
+// 游戏当前所处的"业务日"：凌晨0-4点按上一天计算，其余按当天计算
+function getGameDate(now) {
+  const n = now || new Date();
+  const d = new Date(n);
+  if (isPreRefreshWindow(n)) d.setDate(d.getDate() - 1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatCNDate(d) {
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+function formatCNDateFull(d) {
+  return `${formatCNDate(d)}（${CN_WEEKDAYS[d.getDay()]}）`;
+}
+
 function buildWeekOptions() {
   const opts = [];
   for (let i = 0; i >= -4; i--) opts.push(weekLabel(i));

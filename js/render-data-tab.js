@@ -35,6 +35,7 @@ function renderDataTabDetails() {
   const hasComplete = hasCompleteWeek(recs, selItem);
   const focusRec = selWeek ? itemRecs.find(r => r.week === selWeek) : null;
   const currentWeekPrices = focusRec ? focusRec.prices : Array(7).fill(null);
+  const priceRange = getItemPriceRange(currentAccount, selItem);
 
   let html = '';
 
@@ -143,7 +144,7 @@ function renderDataTabDetails() {
               const valColor = mismatch ? 'var(--red)' : isObs ? 'var(--teal)' : i===pmaxI ? 'var(--green)' : i===pminI ? 'var(--red)' : 'var(--textb)';
               return `<div style="text-align:center;background:var(--bg3);padding:4px 2px">
                 <div style="font-size:10px;color:var(--textd);font-family:var(--mono)">${d.replace('周','')}</div>
-                <div style="font-family:var(--mono);font-size:13px;color:${valColor};font-weight:${isConfirmed||isObs?'bold':'normal'}">${isObs?obs.toLocaleString():formatPred(pred,'')}</div>
+                <div style="font-family:var(--mono);font-size:13px;color:${valColor};font-weight:${isConfirmed||isObs?'bold':'normal'}">${isObs?obs.toLocaleString():formatPred(pred,'',priceRange)}</div>
                 ${isObs?`<div style="font-size:9px;color:var(--textd)">(实)</div>`:`<div style="font-size:9px;color:var(--textd)">(预)</div>`}
               </div>`;
             }).join('')}

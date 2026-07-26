@@ -95,7 +95,23 @@ function cycleItemTag(item) {
   renderOverview();
 }
 
+function renderRefreshWarning() {
+  const box = document.getElementById('ov-refresh-warning');
+  if (!box) return;
+  const now = new Date();
+  if (!isPreRefreshWindow(now)) { box.innerHTML = ''; return; }
+  const todayLabel = formatCNDateFull(now);
+  const gameDayLabel = formatCNDateFull(getGameDate(now));
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  box.innerHTML = `<div class="delta-banner pending">
+    <span style="font-size:16px">⚠</span>
+    <span>今天（${todayLabel}）数据尚未刷新（游戏于每日 04:00 刷新数据，当前 ${hh}:${mm}），请仍按 ${gameDayLabel} 的数据填写。</span>
+  </div>`;
+}
+
 function renderOverview() {
+  renderRefreshWarning();
   const week = document.getElementById('ov-week-sel').value;
   const recs = getRecords(currentAccount);
   const items = getOrderedItems(recs);
@@ -114,6 +130,7 @@ function renderOverview() {
     const currentPrices = focusRec ? focusRec.prices : Array(7).fill(null);
     const isLocked = result && result.stage === 'locked';
     const isPending = result && result.stage === 'pending';
+    const priceRange = getItemPriceRange(currentAccount, item);
 
     const statusColor = isLocked ? 'var(--green)' : isPending ? 'var(--accent)' : 'var(--textd)';
     const statusLabel = isLocked ? 'ε 已锁定' : isPending ? `收敛中 ${result.candidateCount}/8` : '数据不足';
@@ -162,9 +179,9 @@ function renderOverview() {
       else if (pred != null) {
         val = pred.toLocaleString();
         cls = candidateCount === 1 ? 'confirmed' : 'candidate';
-        if (pred < 300 || pred > 5500) {
+        if (pred < priceRange.min || pred > priceRange.max) {
           extraStyle = 'color:var(--red)!important';
-          title = ' title="预测数据超过范围(300-5500)，不准确"';
+          title = ` title="预测数据超过范围(${priceRange.min}-${priceRange.max})，不准确"`;
         }
       }
       return `<div class="ov-pred-cell" ${title}>

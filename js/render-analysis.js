@@ -11,9 +11,10 @@
 // ══════════════════════════════════════
 // ANALYSIS
 // ══════════════════════════════════════
-function formatPred(val, defaultClass = '') {
-  if (val < 300 || val > 5500) {
-    return `<span class="${defaultClass}" style="color:var(--red)!important" title="预测数据超过范围(300-5500)，不准确">${val.toLocaleString()}</span>`;
+function formatPred(val, defaultClass = '', range) {
+  const r = range || DEFAULT_PRICE_RANGE;
+  if (val < r.min || val > r.max) {
+    return `<span class="${defaultClass}" style="color:var(--red)!important" title="预测数据超过范围(${r.min}-${r.max})，不准确">${val.toLocaleString()}</span>`;
   }
   return `<span class="${defaultClass}">${val.toLocaleString()}</span>`;
 }
@@ -33,6 +34,7 @@ function renderAnalysis() {
   const focusRec = week ? recs.find(r => r.week === week) : null;
   const currentWeekPrices = focusRec ? focusRec.prices : Array(7).fill(null);
   const hasCurrentObs = currentWeekPrices.some(p => p != null);
+  const priceRange = getItemPriceRange(currentAccount, item);
 
   let html = '';
 
@@ -148,7 +150,7 @@ function renderAnalysis() {
             const cls = isMismatch ? 'mismatch' : isObs ? 'obs' : 'predicted';
             html += `<div class="pp-cell">
               <div class="pp-day">${d.replace('周','')}</div>
-              <div class="pp-val">${formatPred(p.predicted[i], cls)}</div>
+              <div class="pp-val">${formatPred(p.predicted[i], cls, priceRange)}</div>
             </div>`;
           });
           html += `</div>
@@ -207,7 +209,7 @@ function renderAnalysis() {
           const cls = isMismatch ? 'mismatch' : isObs ? 'obs' : 'predicted';
           html += `<div class="pp-cell">
             <div class="pp-day">${d.replace('周','')}</div>
-            <div class="pp-val">${formatPred(p.predicted[i], cls)}</div>
+            <div class="pp-val">${formatPred(p.predicted[i], cls, priceRange)}</div>
           </div>`;
         });
         html += `</div>
@@ -227,7 +229,7 @@ function renderAnalysis() {
           <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:6px">
             ${DAYS.map((d,i)=>`<div style="text-align:center;background:var(--bg3);padding:4px 2px">
               <div style="font-size:13px;color:var(--textd)">${d.replace('周','')}</div>
-              <div style="font-family:var(--mono);font-size:13px;color:var(--green);font-weight:bold">${formatPred(u.predicted[i], '')}</div>
+              <div style="font-family:var(--mono);font-size:13px;color:var(--green);font-weight:bold">${formatPred(u.predicted[i], '', priceRange)}</div>
             </div>`).join('')}
           </div>
         </div>`;
@@ -262,7 +264,7 @@ function renderAnalysis() {
         DAYS.forEach((d,i) => {
           html += `<div style="text-align:center">
             <div style="font-size:10px;color:var(--textd);font-family:var(--mono)">${d.replace('周','')}</div>
-            <div style="font-family:var(--mono);font-size:14px;color:var(--textb)">${formatPred(p.predicted[i], '')}</div>
+            <div style="font-family:var(--mono);font-size:14px;color:var(--textb)">${formatPred(p.predicted[i], '', priceRange)}</div>
           </div>`;
         });
         html += `</div>
