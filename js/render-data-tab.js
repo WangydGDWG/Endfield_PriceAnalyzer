@@ -35,12 +35,16 @@ function renderDataTabDetails() {
   const hasComplete = hasCompleteWeek(recs, selItem);
   const focusRec = selWeek ? itemRecs.find(r => r.week === selWeek) : null;
   const currentWeekPrices = focusRec ? focusRec.prices : Array(7).fill(null);
+  const weekFit = getWeekFit(result, selWeek);
+  const ignoreMask = shadowIgnoreMask(weekFit);
+  const filterPrices = currentWeekPrices.map((p, i) => ignoreMask[i] ? null : p);
+  const shadowDays = weekFit && Array.isArray(weekFit.shadowDays) ? weekFit.shadowDays : [];
   const priceRange = getItemPriceRange(currentAccount, selItem);
 
   let html = '';
 
   html += `<div class="detail-section" style="margin-bottom:20px">
-    <div class="detail-section-title">ε 向量与拟合状态</div>`;
+    <div class="detail-section-title" data-en="FIT STATUS">ε 向量与拟合状态</div>`;
     
   html += `<div style="margin-bottom:16px">
     <div style="font-family:var(--disp);font-size:15px;font-weight:600;color:var(--textb);letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -70,7 +74,7 @@ function renderDataTabDetails() {
       最佳拟合模板：<span style="color:var(--teal)">T${result.lockedSrcTpl.id}·${result.lockedSrcTpl.name}</span>
       &nbsp;X=${result.lockedSrcTpl.coeff}
       &nbsp;·&nbsp;基于 ${result.weekCount} 周数据
-      &nbsp;·&nbsp;收敛轮次 ${result.convergenceRounds||0}
+      &nbsp;·&nbsp;一致周 ${result.convergenceRounds||0}
       ${result.stage==='pending'?`&nbsp;·&nbsp;<span style="color:var(--accent)">候选 ${result.candidateCount} 组</span>`:''}
     </div>`;
 
@@ -104,17 +108,56 @@ function renderDataTabDetails() {
   }
   html += `</div></div>`;
 
+  // ══════════════════════════════════════
+  // 影子数据修正明细
+  // ══════════════════════════════════════
+  if (result && result.shadowWeeks && result.shadowWeeks.length) {
+    html += `<div class="detail-section" style="margin-bottom:24px">
+      <div class="detail-section-title" style="color:var(--red)" data-en="SHADOW CORRECTION">影子数据修正明细</div>
+      <div style="font-size:13px;font-family:var(--mono);color:var(--textd);line-height:1.8;margin-bottom:14px;padding:8px 12px;background:var(--bg3);border-left:2px solid var(--red)">
+        影子天不参与 ε 拟合与模板过滤；“修正值” = 同模板格点 × (1 + X × 共识 ε)。
+        原始记录不会被改写，修正仅用于分析与预测。
+      </div>`;
+    result.shadowWeeks.forEach(sw => {
+      const isSel = sw.week === selWeek;
+      html += `<div class="shadow-week${sw.status === 'partial' ? ' low-conf' : ''}" style="${isSel ? 'outline:1px solid var(--accent);' : ''}">
+        <div class="shadow-week-head">
+          <span class="shadow-week-label">${esc(sw.week)}</span>
+          ${sw.template ? `<span class="shadow-week-tpl">T${sw.template.id} · ${sw.template.name}（X=${sw.template.coeff}）</span>` : ''}
+          <span class="shadow-week-count">${sw.shadowDays.length} 天影子${sw.status === 'partial' ? ' · 低置信' : ''}</span>
+        </div>`;
+      if (sw.shadowDays.length) {
+        html += `<div class="shadow-day-list">`;
+        sw.shadowDays.forEach(d => {
+          const sign = d.delta > 0 ? '+' : '';
+          html += `<div class="shadow-day">
+            <span class="shadow-day-name">${DAYS[d.day]}</span>
+            <span class="shadow-day-orig">${d.observed.toLocaleString()}</span>
+            <span class="shadow-day-arrow">→</span>
+            <span class="shadow-day-fix">${d.corrected.toLocaleString()}</span>
+            <span class="shadow-day-delta ${d.delta >= 0 ? 'up' : 'down'}">${sign}${d.delta.toLocaleString()}</span>
+            ${d.epsKnown === false ? '<span class="shadow-day-warn" title="该天 ε 未被任何干净周观测，修正值按 ε=0 估算">ε?</span>' : ''}
+          </div>`;
+        });
+        html += `</div>`;
+      }
+      html += `</div>`;
+    });
+    html += `</div>`;
+  }
+
   // 仅在 ε 已锁定或收敛中时显示候选解
   if (result && (result.stage === 'locked' || result.stage === 'pending')) {
     html += `<div class="detail-section" style="margin-bottom:24px">
-      <div class="detail-section-title">本周拟合候选解 ${selWeek ? `<span style="font-weight:400;color:var(--textd);font-size:13px">· ${esc(selWeek)}</span>` : ''}</div>`;
+      <div class="detail-section-title" data-en="CANDIDATES">本周拟合候选解 ${selWeek ? `<span style="font-weight:400;color:var(--textd);font-size:13px">· ${esc(selWeek)}</span>` : ''}</div>`;
 
-    const eight = filterEightPredictions(result.eightPredictions, currentWeekPrices);
+    const eight = filterEightPredictions(result.eightPredictions, filterPrices);
     const remaining = eight.filter(p => !p.eliminated);
     html += `<div style="font-size:13px;font-family:var(--mono);color:var(--textd);margin-bottom:14px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:8px 12px;background:var(--bg3);border-left:2px solid var(--teal)">
       <span>ε = [${result.epsilonVec.map(e=>e!=null?e.toFixed(4):'—').join(', ')}]</span>
       <span style="color:${remaining.length===1?'var(--green)':remaining.length===0?'var(--red)':'var(--accent)'}">候选 ${remaining.length} / 8</span>
       ${result.stage==='pending'?'<span style="color:var(--accent)">· ε 收敛中</span>':''}
+      ${shadowDays.length?`<span style="color:var(--red)">· 已忽略 ${shadowDays.length} 个影子天</span>`:''}
       ${result.isFrozen?'<span style="color:var(--green)">· ε 已冻结</span>':''}
     </div>
     <div class="detail-fn-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px">`;
@@ -140,12 +183,13 @@ function renderDataTabDetails() {
               const obs = currentWeekPrices[i];
               const pred = p.predicted[i];
               const isObs = obs != null;
-              const mismatch = isElim && isObs && Math.abs(pred-obs)/obs >= 0.003;
-              const valColor = mismatch ? 'var(--red)' : isObs ? 'var(--teal)' : i===pmaxI ? 'var(--green)' : i===pminI ? 'var(--red)' : 'var(--textb)';
+              const isShadow = ignoreMask[i];
+              const mismatch = isElim && isObs && !isShadow && Math.abs(pred-obs)/obs >= 0.003;
+              const valColor = isShadow ? 'var(--red)' : mismatch ? 'var(--red)' : isObs ? 'var(--teal)' : i===pmaxI ? 'var(--green)' : i===pminI ? 'var(--red)' : 'var(--textb)';
               return `<div style="text-align:center;background:var(--bg3);padding:4px 2px">
-                <div style="font-size:10px;color:var(--textd);font-family:var(--mono)">${d.replace('周','')}</div>
-                <div style="font-family:var(--mono);font-size:13px;color:${valColor};font-weight:${isConfirmed||isObs?'bold':'normal'}">${isObs?obs.toLocaleString():formatPred(pred,'',priceRange)}</div>
-                ${isObs?`<div style="font-size:9px;color:var(--textd)">(实)</div>`:`<div style="font-size:9px;color:var(--textd)">(预)</div>`}
+                <div style="font-size:10px;color:var(--textd);font-family:var(--mono)">${d.replace('周','')}${isShadow?'<span class="shadow-mark">影</span>':''}</div>
+                <div style="font-family:var(--mono);font-size:13px;color:${valColor};font-weight:${isConfirmed||isObs?'bold':'normal'}">${isObs?obs.toLocaleString():formatPredCompact(pred,'',priceRange)}</div>
+                ${isObs?`<div style="font-size:9px;color:var(--textd)">${isShadow?'(影)':'(实)'}</div>`:`<div style="font-size:9px;color:var(--textd)">(预)</div>`}
               </div>`;
             }).join('')}
           </div>
@@ -165,14 +209,14 @@ function renderDataTabDetails() {
   // 绘制历史折线图（如果存在canvas）
   if (result && (result.stage === 'locked' || result.stage === 'pending') && result.eightPredictions) {
     const eightPreds = result.eightPredictions;
-    const selWeekPrices = focusRec ? focusRec.prices : null;
+    const selWeekPrices = filterPrices;
     setTimeout(() => {
-      drawDataHistoryChart('data-history-chart', itemRecs, eightPreds, selWeek, selWeekPrices);
+      drawDataHistoryChart('data-history-chart', itemRecs, eightPreds, selWeek, selWeekPrices, shadowDays);
     }, 80);
   }
 }
 
-function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek, selectedWeekPrices) {
+function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek, selectedWeekPrices, shadowDays) {
 
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
@@ -240,6 +284,10 @@ function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek,
 
   const GREEN = (
     cs.getPropertyValue('--green') || '#52d68a'
+  ).trim();
+
+  const RED = (
+    cs.getPropertyValue('--red') || '#e05c6a'
   ).trim();
 
   // ===== 辅助线 =====
@@ -536,12 +584,19 @@ function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek,
 
     if (selRec) {
 
+      const shadowSet = new Set(
+        Array.isArray(shadowDays)
+          ? shadowDays.map(d => (typeof d === 'number' ? d : d.day))
+          : []
+      );
+
       const pts = selRec.prices.map((p, i) =>
         p != null
           ? {
               x: dayToX(i),
               y: valToY(p),
-              v: p
+              v: p,
+              shadow: shadowSet.has(i)
             }
           : null
       );
@@ -552,57 +607,65 @@ function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek,
 
         ctx.save();
 
-        ctx.strokeStyle = GREEN;
-
-        ctx.lineWidth = 3;
-
-        ctx.lineJoin = 'round';
-
-        ctx.shadowColor = GREEN;
-        ctx.shadowBlur = 8;
-
+        // 先画一条贯穿实测点的虚线，提示“原始记录”的连续性
+        ctx.strokeStyle = 'rgba(255,255,255,0.20)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
-
         let first = true;
-
-        pts.forEach(pt => {
-
-          if (!pt) return;
-
-          first
-            ? ctx.moveTo(pt.x, pt.y)
-            : ctx.lineTo(pt.x, pt.y);
-
+        connected.forEach(pt => {
+          first ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y);
           first = false;
         });
-
         ctx.stroke();
-
         ctx.restore();
+
+        // 干净天：原有绿色实线
+        const cleanPts = connected.filter(pt => !pt.shadow);
+        if (cleanPts.length >= 2) {
+          ctx.save();
+          ctx.strokeStyle = GREEN;
+          ctx.lineWidth = 3;
+          ctx.lineJoin = 'round';
+          ctx.shadowColor = GREEN;
+          ctx.shadowBlur = 8;
+          ctx.beginPath();
+          cleanPts.forEach((pt, idx) => {
+            idx === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y);
+          });
+          ctx.stroke();
+          ctx.restore();
+        }
       }
 
       pts.forEach(pt => {
 
         if (!pt) return;
 
+        const color = pt.shadow ? RED : GREEN;
+
         ctx.save();
 
         ctx.beginPath();
 
-        ctx.arc(
-          pt.x,
-          pt.y,
-          5,
-          0,
-          Math.PI * 2
-        );
+        if (pt.shadow) {
+          // 影子天画成菱形，提醒“这不是真实格点”
+          const r = 5;
+          ctx.moveTo(pt.x, pt.y - r);
+          ctx.lineTo(pt.x + r, pt.y);
+          ctx.lineTo(pt.x, pt.y + r);
+          ctx.lineTo(pt.x - r, pt.y);
+          ctx.closePath();
+        } else {
+          ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+        }
 
-        ctx.fillStyle = GREEN;
+        ctx.fillStyle = color;
 
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 1.6;
 
-        ctx.shadowColor = GREEN;
+        ctx.shadowColor = color;
         ctx.shadowBlur = 8;
 
         ctx.fill();
@@ -617,12 +680,12 @@ function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek,
 
         ctx.font = `bold 9px ${MONO_FONT}`;
 
-        ctx.fillStyle = GREEN;
+        ctx.fillStyle = color;
 
         ctx.textAlign = 'center';
 
         ctx.fillText(
-          pt.v.toLocaleString(),
+          (pt.shadow ? '影 ' : '') + pt.v.toLocaleString(),
           pt.x,
           labelY
         );
@@ -932,7 +995,8 @@ function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek,
         allRecs,
         eightPredictions,
         selectedWeek,
-        selectedWeekPrices
+        selectedWeekPrices,
+        shadowDays
       );
     }
   };
@@ -948,7 +1012,8 @@ function drawDataHistoryChart(canvasId, allRecs, eightPredictions, selectedWeek,
       allRecs,
       eightPredictions,
       selectedWeek,
-      selectedWeekPrices
+      selectedWeekPrices,
+      shadowDays
     );
   };
 }

@@ -112,6 +112,7 @@ function renderRefreshWarning() {
 
 function renderOverview() {
   renderRefreshWarning();
+  const scrollY = window.scrollY;
   const week = document.getElementById('ov-week-sel').value;
   const recs = getRecords(currentAccount);
   const items = getOrderedItems(recs);
@@ -128,19 +129,25 @@ function renderOverview() {
     const result = analyzeItemSafe(itemRecs);
     const focusRec = week ? itemRecs.find(r => r.week === week) : null;
     const currentPrices = focusRec ? focusRec.prices : Array(7).fill(null);
+    const weekFit = getWeekFit(result, week);
+    const ignoreMask = shadowIgnoreMask(weekFit);
+    const filterPrices = currentPrices.map((p, i) => ignoreMask[i] ? null : p);
+    const shadowDays = weekFit && Array.isArray(weekFit.shadowDays) ? weekFit.shadowDays.map(d => d.day) : [];
     const isLocked = result && result.stage === 'locked';
     const isPending = result && result.stage === 'pending';
     const priceRange = getItemPriceRange(currentAccount, item);
 
     const statusColor = isLocked ? 'var(--green)' : isPending ? 'var(--accent)' : 'var(--textd)';
-    const statusLabel = isLocked ? 'ε 已锁定' : isPending ? `收敛中 ${result.candidateCount}/8` : '数据不足';
+    const statusLabel = isLocked
+      ? (shadowDays.length ? `ε 已锁定 · 影子${shadowDays.length}` : 'ε 已锁定')
+      : isPending ? `收敛中 ${result.candidateCount}/8` : '数据不足';
 
     let predPrices = Array(7).fill(null);
     let predLabel = '暂无预测';
     let candidateCount = 0;
 
     if (result && (isLocked || isPending) && result.eightPredictions) {
-      const eight = filterEightPredictions(result.eightPredictions, currentPrices);
+      const eight = filterEightPredictions(result.eightPredictions, filterPrices);
       const remaining = eight.filter(p => !p.eliminated);
       candidateCount = remaining.length;
       if (remaining.length === 1) {
@@ -171,10 +178,12 @@ function renderOverview() {
     const predCells = DAYS.map((d, i) => {
       const obs = currentPrices[i];
       const pred = predPrices[i];
+      const isShadow = ignoreMask[i];
       let val = '—', cls = 'unknown', extraStyle='', title='';
       if (obs != null) { 
         val = obs.toLocaleString(); 
-        cls = 'obs'; 
+        cls = isShadow ? 'shadow' : 'obs';
+        if (isShadow) title = ' title="影子天：已按同模板 + 共识 ε 修正，不参与模板过滤"';
       }
       else if (pred != null) {
         val = pred.toLocaleString();
@@ -185,7 +194,7 @@ function renderOverview() {
         }
       }
       return `<div class="ov-pred-cell" ${title}>
-        <div class="ov-pred-day">${d.replace('周','')}</div>
+        <div class="ov-pred-day">${d.replace('周','')}${isShadow ? '<span class="shadow-mark">影</span>' : ''}</div>
         <div class="ov-pred-val ${cls}" style="${extraStyle}">${val}</div>
       </div>`;
     }).join('');
@@ -203,6 +212,11 @@ function renderOverview() {
     }
 
     let cardContent = '';
+    const shadowNote = shadowDays.length
+      ? `<div class="ov-shadow-note">⚠ ${shadowDays.map(i => DAYS[i]).join('、')} 为影子天，已按修正值过滤模板</div>`
+      : '';
+    // 图表与格子使用同一套显示值：有实测用实测，没实测用预测
+    const chartPrices = currentPrices.map((p, i) => p != null ? p : predPrices[i]);
     if (isFullyConfirmed) {
       const pmax = Math.max(...predPrices);
       const pmin = Math.min(...predPrices);
@@ -230,10 +244,11 @@ function renderOverview() {
             </span>
           </div>
           <div class="ov-pred-grid" id="ov-pred-grid-${esc(item)}">${predCells}</div>
+          ${shadowNote}
           <div class="price-chart-wrap">
           <canvas id="price-chart-${esc(item)}"
             style="display:block; width:100%; height:80px;"
-            data-prices="${predPrices.join(',')}"
+            data-prices="${chartPrices.join(',')}"
           ></canvas>
           </div>
         </div>
@@ -260,6 +275,7 @@ function renderOverview() {
             </span>
           </div>
           <div class="ov-pred-grid">${predCells}</div>
+          ${shadowNote}
           ${hlHtml}
         </div>
       </div>`;
@@ -270,7 +286,7 @@ function renderOverview() {
 
   grid.innerHTML = html + `<div class="ov-add-item" onclick="promptCreateItem()"><span style="font-size:24px">+</span><span>快速添加物品</span></div>`;
 
-  requestAnimationFrame(() => { renderAllPriceCharts(); attachOvDragHandlers(); });
+  requestAnimationFrame(() => { renderAllPriceCharts(); attachOvDragHandlers(); window.scrollTo(0, scrollY); });
 }
 
 // ============================================================

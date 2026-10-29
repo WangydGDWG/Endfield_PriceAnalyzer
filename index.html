@@ -33,7 +33,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>终末地 · 弹性物资分析仪</title>
-<link rel="icon" type="image/png" href="/icon.png">
+<link rel="icon" type="image/png" href="icon.png">
 <link rel="stylesheet" href="css/style.css" onload="__loaderTick()">
 <style>
 #__loader{position:fixed;inset:0;z-index:99999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:'JetBrains Mono',monospace;transition:opacity .4s ease;}
@@ -81,13 +81,13 @@ function __loaderDone(){
       </svg>
       <div>
         <div class="logo-big">END<em>FIELD</em> · PRICE<em>ANALYZER</em></div>
-        <div class="logo-sub" style="cursor:pointer;opacity:.7;transition:opacity .15s" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity='.7'" onclick="openAboutModal()">终末地 · 弹性物资价格逆向分析工具 v5</div>
+        <div class="logo-sub" style="cursor:pointer;opacity:.7;transition:opacity .15s" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity='.7'" onclick="openAboutModal()">终末地 · 弹性物资价格逆向分析工具 v6.1</div>
       </div>
     </div>
   </div>
   <div class="accounts-area">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div class="section-label" style="margin-bottom:0">账号</div>
+      <div class="section-label" style="margin-bottom:0" data-en="ACCOUNTS">账号</div>
       <div style="display:flex;gap:8px;align-items:center">
         <button class="btn btn-sm" onclick="openExportModal()">↑ 导出数据</button>
         <div class="import-dropdown" id="importDropdown">
@@ -127,7 +127,7 @@ function __loaderDone(){
   <div id="tab-overview" class="tab-pane active">
     <div class="ov-body">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="font-family:var(--mono);font-size:18px;color:FFFFFF" id="ov-week-label"></div>
+        <div style="font-family:var(--mono);font-size:18px;color:var(--textb)" id="ov-week-label"></div>
         <div style="display:flex;gap:8px;align-items:center">
           <label style="font-size:12px;color:var(--textd);margin:0">周次</label>
           <select id="ov-week-sel" onchange="renderOverview()" style="width:auto;font-size:13px;padding:4px 8px"></select>
@@ -143,7 +143,7 @@ function __loaderDone(){
     <div class="av-body">
       <div>
         <div class="panel">
-          <div class="panel-title">录入价格数据</div>
+          <div class="panel-title" data-en="PRICE INPUT">录入价格数据</div>
           <div class="gap6">
             <label>物品名称</label>
             <select id="inp-item" onchange="onInpItemChange()"></select>
@@ -283,14 +283,16 @@ function __loaderDone(){
     <button class="modal-close" onclick="document.getElementById('aboutModalOverlay').classList.remove('open')">✕</button>
     <div style="font-family:var(--mono);font-size:14px;line-height:2;color:var(--text)">
       <div style="margin-bottom:8px">网页名称：<span style="color:var(--textb)">终末地 · 弹性物资价格逆向分析工具</span></div>
-      <div style="margin-bottom:8px">版本号：<span style="color:var(--textb)">v5</span></div>
-      <div style="margin-bottom:8px">更新时间：<span style="color:var(--textb)">2026-07-13</span></div>
+      <div style="margin-bottom:8px">版本号：<span style="color:var(--textb)">v6.1</span></div>
+      <div style="margin-bottom:8px">更新时间：<span style="color:var(--textb)">2026-10-29</span></div>
+      <div style="margin-bottom:8px;margin-top:16px;border-top:1px solid var(--border);padding-top:16px">本次更新：全局 ε 共识拟合 · 影子数据识别与修正 · 拟合缓存与渲染优化 · 终末地 UI 元素（切角 / 眉标 / 编号 / 斜纹）</div>
       <div style="margin-bottom:8px;margin-top:16px;border-top:1px solid var(--border);padding-top:16px">开发者：<a href="https://space.bilibili.com/609322802" target="_blank" style="color:var(--teal);text-decoration:none">@Wangyd</a></div>
       <div style="margin-bottom:8px">鸣谢：
         <a href="https://space.bilibili.com/3706929100622426" target="_blank" style="color:var(--teal);text-decoration:none">@小杯基建研究会</a>
         &nbsp;
         <a href="https://space.bilibili.com/401769247" target="_blank" style="color:var(--teal);text-decoration:none">@卓越行动</a>
       </div>
+      <div style="margin-bottom:8px">UI 元素参考：<a href="https://github.com/hhikr/endfield-ui-skill" target="_blank" style="color:var(--teal);text-decoration:none">hhikr/endfield-ui-skill</a>（切角 / 眉标 / 编号 / 斜纹）</div>
       <div>正推原理解析：<a href="https://www.bilibili.com/video/BV1zgRAByECH/" target="_blank" style="color:var(--accent);text-decoration:none">【终末地】从三万多条弹性物资价格中，我们破解了价格变动的规律</a></div>
       <div>逆推原理&使用方法：<a href="https://www.bilibili.com/video/BV1ahjt6CEpZ/" target="_blank" style="color:var(--accent);text-decoration:none">【终末地】弹性物资这么买利益才能最大化~ 终末地弹性物资价格分析仪正式启用！</a></div>
     </div>

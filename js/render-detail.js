@@ -17,7 +17,7 @@ function renderDetail() {
   let html = '';
 
   html += `<div class="detail-section">
-    <div class="detail-section-title">§ 1 · 算法公式说明</div>
+    <div class="detail-section-title" data-en="ALGORITHM">§ 1 · 算法公式说明</div>
     <div class="formula-box">
       <div class="fml-comment">// 价格生成公式（YJ的小杯代码）</div>
       <div><span class="fml-key">P<sub>i</sub></span> = <span class="fml-val">T<sup>(n)</sup><sub>i</sub></span> × ( 1 + <span class="fml-val">X<sup>(n)</sup></span> × <span class="fml-key">ε<sub>i</sub></span> )</div>
@@ -38,7 +38,7 @@ function renderDetail() {
   </div>`;
 
   html += `<div class="detail-section">
-    <div class="detail-section-title">§ 2 · 工具核心算法函数实现</div>
+    <div class="detail-section-title" data-en="FUNCTIONS">§ 2 · 工具核心算法函数实现</div>
     
     <div class="detail-fn-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:12px;margin-bottom:20px">
       
@@ -105,7 +105,7 @@ function renderDetail() {
           <span style="font-family:var(--mono);font-size:11px;color:var(--textd)">枚举 ε 候选集</span>
         </div>
         <div style="padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--text)">
-          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 母本周的 8 种模板假设 → 8 组 ε 候选</div>
+          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 某个可用周的 8 种模板假设 → 8 组 ε 候选</div>
           <div style="margin-bottom:6px">
             <span style="color:var(--accent)">输入</span>：一周的实测价格<br>
             <span style="color:var(--teal)">输出</span>：长度为 8 的数组，每项为 {srcTpl, epsilonVec}
@@ -113,7 +113,7 @@ function renderDetail() {
           <div style="color:var(--textd);font-size:12px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
             遍历全部 8 个 TEMPLATES，对每个模板调用<br>
             &nbsp;&nbsp;<code style="color:var(--accent)">computeEpsilonVec(weekPrices, tpl)</code><br>
-            假设"母本周用的是模板 n"，反推出对应的 ε
+            假设"该周用的是模板 n"，反推出对应的 ε
           </div>
         </div>
       </div>
@@ -140,19 +140,19 @@ function renderDetail() {
       
       <div style="border:1px solid var(--green);background:var(--bg2)">
         <div style="padding:10px 14px;border-bottom:1px solid var(--green);background:rgba(82,214,138,0.06);display:flex;align-items:center;gap:8px">
-          <span style="font-family:var(--mono);font-size:13px;font-weight:bold;color:var(--green)">filterPredictions(predictions, weekPrices)</span>
-          <span style="font-family:var(--mono);font-size:11px;color:var(--textd)">残差筛选与收敛</span>
+          <span style="font-family:var(--mono);font-size:13px;font-weight:bold;color:var(--green)">refineEpsilon(initialEps, weeks)</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--textd)">一致周加权平均 ε</span>
         </div>
         <div style="padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--text)">
-          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 用校验周价格淘汰不匹配的预测</div>
+          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 用所有一致周重新估计每一天的 ε</div>
           <div style="margin-bottom:6px">
-            <span style="color:var(--accent)">输入</span>：64 组预测 + 校验周实测价格<br>
-            <span style="color:var(--teal)">输出</span>：按残差升序排列的匹配项数组
+            <span style="color:var(--accent)">输入</span>：初始 ε + 全部可用周<br>
+            <span style="color:var(--teal)">输出</span>：加权平均后的 ε，以及每轮的一致周/残差
           </div>
           <div style="color:var(--textd);font-size:12px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-            对每组预测调用 <code style="color:var(--accent)">matchResidual(pred, weekPrices)</code><br>
-            <span style="color:var(--green)">动态阈值</span> = max(最优残差 × 5, 0.003)<br>
-            只保留残差 ≤ 阈值的预测项
+            对第 i 天：<br>
+            &nbsp;&nbsp;<code style="color:var(--accent)">ε̄ᵢ = Σ (Tᵢ·Xᵢ)² · εᵢ / Σ (Tᵢ·Xᵢ)²</code><br>
+            取整噪声被多周平均抵消，迭代至一致周集合稳定。
           </div>
         </div>
       </div>
@@ -182,36 +182,58 @@ function renderDetail() {
           <span style="font-family:var(--mono);font-size:11px;color:var(--textd)">主分析入口</span>
         </div>
         <div style="padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--text)">
-          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 跨周交叉验证收敛 ε，返回分析结果</div>
+          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 全局 ε 共识拟合，跨周验证并识别影子周</div>
           <div style="margin-bottom:6px">
             <span style="color:var(--accent)">输入</span>：某物品的全部历史记录<br>
-            <span style="color:var(--teal)">输出</span>：{ stage, epsilonVec, eightPredictions, ... }
+            <span style="color:var(--teal)">输出</span>：{ stage, epsilonVec, eightPredictions, weekFits, shadowWeeks, ... }
           </div>
           <div style="color:var(--textd);font-size:12px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
             <span style="color:var(--accent)">若只有1周数据</span>：<br>
             &nbsp;&nbsp;返回 stage='first_week'，全部 64 组穷举<br>
             <span style="color:var(--accent)">若 ≥2 周</span>：<br>
-            &nbsp;&nbsp;按时间顺序两两配对 (wᵢ → wᵢ₊₁)<br>
-            &nbsp;&nbsp;母本周反推 ε → 校验周筛选 → 多轮取交集<br>
-            &nbsp;&nbsp;交集唯一且有完整周 → stage='locked'<br>
-            &nbsp;&nbsp;交集不唯一 → stage='pending'
+            &nbsp;&nbsp;每周 × 8 模板 → 8 组 ε 假设<br>
+            &nbsp;&nbsp;按“能解释的周数 / 支撑天数 / 残差”全局打分<br>
+            &nbsp;&nbsp;对一致周按 (Tᵢ·Xᵢ)² 加权平均 ε，迭代至稳定<br>
+            &nbsp;&nbsp;每天至少两周独立观测且解唯一 → stage='locked'<br>
+            &nbsp;&nbsp;否则 stage='pending'，并给出候选与原因
+          </div>
+        </div>
+      </div>
+      
+      <div style="border:1px solid var(--red);background:var(--bg2);grid-column:1/-1">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--red);background:rgba(224,92,106,0.05);display:flex;align-items:center;gap:8px">
+          <span style="font-family:var(--mono);font-size:13px;font-weight:bold;color:var(--red)">classifyShadowWeek(eps, week)</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--textd)">影子周定位与修正</span>
+        </div>
+        <div style="padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--text)">
+          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 用共识 ε 反推该周，逐天判断是否偏离预期</div>
+          <div style="margin-bottom:6px">
+            <span style="color:var(--accent)">输入</span>：共识 ε + 某一周实测价格<br>
+            <span style="color:var(--teal)">输出</span>：{ status, template, shadowDays, corrected }
+          </div>
+          <div style="color:var(--textd);font-size:12px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+            对每个模板计算预测值 Qᵢ = Tᵢ × (1 + X × εᵢ)：<br>
+            &nbsp;&nbsp;|Qᵢ − Pᵢ| ≤ 容差 → 干净天<br>
+            &nbsp;&nbsp;|Qᵢ − Pᵢ| &gt; 容差 → 影子天，修正值取 Qᵢ<br>
+            干净天不足以确认模板时标记 partial / unresolved，不硬判。
           </div>
         </div>
       </div>
       
       <div style="border:1px solid var(--border);background:var(--bg2);grid-column:1/-1">
         <div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;gap:8px">
-          <span style="font-family:var(--mono);font-size:13px;font-weight:bold;color:var(--accent)">analyzeItemSafe(records)</span>
-          <span style="font-family:var(--mono);font-size:11px;color:var(--accent)">智能增强入口（总览 / 分析 Tab 调用）</span>
+          <span style="font-family:var(--mono);font-size:13px;font-weight:bold;color:var(--textb)">analyzeItemSafe(records)</span>
+          <span style="font-family:var(--mono);font-size:11px;color:var(--textd)">带缓存的安全入口（总览 / 分析 / 数据页调用）</span>
         </div>
         <div style="padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.8;color:var(--text)">
-          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 在 analyzeItem 基础上增加"数据提纯"逻辑</div>
+          <div style="color:var(--textd);margin-bottom:8px;font-size:12px">// 同一份数据只计算一次</div>
           <div style="margin-bottom:6px">
-            <span style="color:var(--accent)">策略</span>：从全量数据中挑出"完整周"和"近似周"（缺1~2天），分别用这些优质数据和全量数据各跑一次 analyzeItem，取候选数更少的那个结果。
+            <span style="color:var(--accent)">缓存键</span>：物品 + 周次 + 7 天价格（排序后）<br>
+            <span style="color:var(--green)">收益</span>：一次保存会触发总览、分析、数据页多次查询，缓存后只算一次。
           </div>
           <div style="color:var(--textd);font-size:12px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-            <span style="color:var(--green)">安全规则</span>：若没有任何完整周，即使优质数据算出 locked，也强制降级为 pending<br>
-            <span style="color:var(--textd)">解决了什么问题</span>：避免因数据中夹杂零散周而导致已收敛的 ε 被误判为未收敛
+            新版 analyzeItem 已内置数据提纯、唯一性校验与影子修正，
+            不再需要“完整周 / 全量数据各跑一次、取候选更少者”的旧策略。
           </div>
         </div>
       </div>
@@ -220,7 +242,7 @@ function renderDetail() {
   </div>`;
 
   html += `<div class="detail-section">
-    <div class="detail-section-title">§ 3 · 8个价格模板（格点数据）</div>
+    <div class="detail-section-title" data-en="TEMPLATES">§ 3 · 8个价格模板（格点数据）</div>
     <div style="overflow-x:auto">
     <table class="tpl-table">
       <thead><tr>
@@ -245,58 +267,62 @@ function renderDetail() {
   </div>`;
 
   html += `<div class="detail-section">
-    <div class="detail-section-title">§ 4 · 计算与校准原理 — 三种周类型详解</div>
+    <div class="detail-section-title" data-en="WEEK TYPES">§ 4 · 计算与校准原理 — 三种周类型详解</div>
 
     <div style="font-family:var(--mono);font-size:13px;color:var(--textd);line-height:1.8;margin-bottom:18px;padding:10px 14px;border-left:2px solid var(--border)">
-      系统通过"跨周交叉验证"逐步收敛 ε 向量。每一条历史周数据在算法中都扮演不同角色，以下三种分类反映了每周数据对最终 ε 锁定的贡献方式。
+      系统把所有历史周放在一起做"全局一致性拟合"：同一 ε 应该能解释每一周（每周只是换了模板）。
+      每一条历史周数据在算法中扮演不同角色，以下三类反映了它对最终 ε 的贡献方式。
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px">
 
       <div style="border:1px solid var(--accent);background:var(--bg2)">
         <div class="detail-fn-header" style="padding:10px 14px;border-bottom:1px solid var(--accent);background:rgba(232,184,75,0.06);display:flex;align-items:center;gap:8px">
-          <span style="font-family:var(--mono);font-size:11px;padding:1px 7px;border:1px solid var(--accent);color:var(--accent)">母本周</span>
-          <span style="font-family:var(--mono);font-size:13px;color:var(--accent)">Source Week</span>
+          <span style="font-family:var(--mono);font-size:11px;padding:1px 7px;border:1px solid var(--accent);color:var(--accent)">候选周</span>
+          <span style="font-family:var(--mono);font-size:13px;color:var(--accent)">Hypothesis Week</span>
         </div>
         <div style="padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--text)">
-          <div style="color:var(--textd);margin-bottom:6px;font-size:12px">// 在跨周对 (w_i → w_{i+1}) 中担任 w_i</div>
-          <div style="margin-bottom:6px">母本周的实测价格被代入公式，在 8 种模板假设下<span style="color:var(--accent)">反推出 8 种 ε 候选向量</span>，作为下一周预测的输入。</div>
+          <div style="color:var(--textd);margin-bottom:6px;font-size:12px">// 每个可用周 × 8 个模板 → 8 组 ε 假设</div>
+          <div style="margin-bottom:6px">把该周实测价格代入反推公式，在 8 种模板假设下各得到一组 ε。
+            这些假设不直接决定结果，而是交给全局打分器比较。</div>
           <div style="color:var(--textd);font-size:12px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-            需要：≥5天有效数据（完整 or 近完整）<br>
-            算法函数：<code style="color:var(--accent)">enumEpsilonCandidates(w_i)</code> → 8 组 ε<br>
-            然后：<code style="color:var(--accent)">enumAllPredictions(ε候选)</code> → 64 组下周预测
+            需要：≥3 天有效数据<br>
+            算法函数：<code style="color:var(--accent)">computeEpsilonVec()</code> → 8 组 ε<br>
+            评估函数：<code style="color:var(--accent)">evaluateEpsilon()</code>
           </div>
         </div>
       </div>
 
       <div style="border:1px solid var(--teal);background:var(--bg2)">
         <div class="detail-fn-header" style="padding:10px 14px;border-bottom:1px solid var(--teal);background:rgba(91,207,250,0.05);display:flex;align-items:center;gap:8px">
-          <span style="font-family:var(--mono);font-size:11px;padding:1px 7px;border:1px solid var(--teal);color:var(--teal)">校验周</span>
-          <span style="font-family:var(--mono);font-size:13px;color:var(--teal)">Filter Week</span>
+          <span style="font-family:var(--mono);font-size:11px;padding:1px 7px;border:1px solid var(--teal);color:var(--teal)">一致周</span>
+          <span style="font-family:var(--mono);font-size:13px;color:var(--teal)">Consensus Week</span>
         </div>
         <div style="padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--text)">
-          <div style="color:var(--textd);margin-bottom:6px;font-size:12px">// 在跨周对 (w_i → w_{i+1}) 中担任 w_{i+1}</div>
-          <div style="margin-bottom:6px">校验周的实测价格被用于<span style="color:var(--teal)">筛选并淘汰</span>母本周产生的 ε 候选，残差超标的候选在此被排除。多轮判断的结果取交集，交集越小则 ε 越收敛。</div>
+          <div style="color:var(--textd);margin-bottom:6px;font-size:12px">// 能被同一个 ε 解释的周</div>
+          <div style="margin-bottom:6px">一致周共享同一个 ε，系统按 (Tᵢ·Xᵢ)² 加权平均各天的 ε，
+            抵消单周取整噪声。它们也是识别影子周的参照系。</div>
           <div style="color:var(--textd);font-size:12px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-            需要：≥5天有效数据<br>
-            算法函数：<code style="color:var(--teal)">filterPredictions(preds, w_{i+1})</code><br>
-            计算每组预测的 <code style="color:var(--teal)">matchResidual()</code> → 动态阈值淘汰
+            锁定条件：每天至少 2 周独立观测、解唯一<br>
+            算法函数：<code style="color:var(--teal)">refineEpsilon()</code><br>
+            校验函数：<code style="color:var(--teal)">sameEpsilon()</code>
           </div>
         </div>
       </div>
 
-      <div style="border:1px solid var(--border);background:var(--bg2)">
-        <div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;gap:8px">
-          <span style="font-family:var(--mono);font-size:11px;padding:1px 7px;border:1px solid var(--textd);color:var(--textd)">数据周</span>
-          <span style="font-family:var(--mono);font-size:13px;color:var(--textd)">Data Week</span>
+      <div style="border:1px solid var(--red);background:var(--bg2)">
+        <div style="padding:10px 14px;border-bottom:1px solid var(--red);background:rgba(224,92,106,0.05);display:flex;align-items:center;gap:8px">
+          <span style="font-family:var(--mono);font-size:11px;padding:1px 7px;border:1px solid var(--red);color:var(--red)">影子周</span>
+          <span style="font-family:var(--mono);font-size:13px;color:var(--red)">Shadow Week</span>
         </div>
         <div style="padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--text)">
-          <div style="color:var(--textd);margin-bottom:6px;font-size:12px">// 数据不足以参与跨周对，或为最末当前周</div>
-          <div style="margin-bottom:6px">数据周的少量价格片段不参与 ε 的跨周收敛，但会被传入 <code style="color:var(--textd)">filterEightPredictions</code>，对本周 8 种候选模板做<span style="color:var(--text)">临时实时过滤</span>，缩小当前预测范围。</div>
+          <div style="color:var(--textd);margin-bottom:6px;font-size:12px">// 无法被共识 ε 完全解释的周</div>
+          <div style="margin-bottom:6px">用共识 ε 反推该周，偏离超过容差的天标记为影子天。
+            影子天不参与 ε 拟合与模板过滤，但会给出"实测 → 修正"对照。</div>
           <div style="color:var(--textd);font-size:12px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-            典型情形：本周仅录入1-3天 / 最末一周<br>
-            算法函数：<code>filterEightPredictions(eightPredictions, currentWeekPrices)</code><br>
-            不影响 ε 收敛，仅用于本周模板候选的实时排除
+            典型情形：超限修正 / 单天录错 / 数据冲突<br>
+            算法函数：<code style="color:var(--red)">classifyShadowWeek()</code><br>
+            输出：shadowDays / corrected / 低置信标记
           </div>
         </div>
       </div>
@@ -306,24 +332,74 @@ function renderDetail() {
     <div style="border:1px solid var(--border);background:var(--bg3);padding:14px 16px;font-family:var(--mono);font-size:13px;line-height:1.9;color:var(--textd)">
       <div style="color:var(--textb);margin-bottom:8px;font-size:14px">收敛路径示意</div>
       <div style="overflow-x:auto;white-space:nowrap">
-        <span style="color:var(--accent)">W1[数据源]</span>
+        <span style="color:var(--accent)">W1..Wn[8n 组 ε 假设]</span>
         <span style="color:var(--border)"> ─────→ </span>
-        <span style="color:var(--teal)">W2[过滤+校准]</span>
+        <span style="color:var(--teal)">全局打分[一致周]</span>
         <span style="color:var(--border)"> ─────→ </span>
-        <span style="color:var(--teal)">W3[验证]</span>
+        <span style="color:var(--teal)">加权平均[共识 ε]</span>
         <span style="color:var(--border)"> ─────→ </span>
-        <span style="color:var(--textd)">W4[数据（本周）]</span>
+        <span style="color:var(--textd)">LOCKED / PENDING</span>
       </div>
       <div style="margin-top:8px">
-        W1 产生 8 组 ε 假设 → W2 保留匹配的子集（母本周同时为下一对出题） → W3 再次过滤取交集
-        → 交集唯一时 <span style="color:var(--green)">ε LOCKED</span> → W4 的零散数据进一步锁定本周模板
+        W1..Wn 各自 × 8 模板 → 8n 组 ε 假设 →
+        按“解释周数 / 支撑天数 / 残差”全局选出共识 ε →
+        一致周加权平均消除取整噪声 →
+        每天都至少两周独立观测且解唯一时 <span style="color:var(--green)">ε LOCKED</span>
       </div>
       <div style="margin-top:8px;color:var(--textd);font-size:12px">
-        一般情况下，仅需一个完整母本周+第二周2天数据即可锁定ε
+        一般情况下，两周完整且使用了不同模板即可锁定；只有一周完整 + 另一周数据时，
+        系统会保留候选并提示补录，而不是给出可能错误的“锁定”。
       </div>
       <div style="margin-top:8px;color:var(--textd);font-size:12px">
-        注意：中间周（W2、W3）同时担任母本周和校验周，是收敛效率最高的数据。
-        录入完整周数据（7天）能显著加速 ε 锁定。
+        注意：同一模板重复出现的两周价格向量会完全相同，此时模板不可辨识，
+        系统会标记为歧义而不是假装锁定。这正是旧版“换两周结果全变”的根源之一。
+      </div>
+    </div>
+  </div>`;
+
+  html += `<div class="detail-section">
+    <div class="detail-section-title" data-en="SHADOW DATA">§ 5 · 影子数据判据与本工具的处理</div>
+
+    <div style="font-family:var(--mono);font-size:13px;color:var(--text);line-height:1.9">
+      <div style="color:var(--textd);font-size:12px;margin-bottom:8px">// 视频中的定义（价格向量 P₁、P₂）</div>
+      <div style="padding:10px 14px;border-left:2px solid var(--red);background:var(--bg3);margin-bottom:14px">
+        P₁ ~ P₂ ⇔ ∃m,n ∈ {1..8}，使 ε(P₁,m) = ε(P₂,n)<br>
+        同偏差性具有自反性、对称性、传递性；不满足则为异偏差性。<br>
+        约 1/5 的周之间是异偏差的，其中偏离预期的具体价格称为影子数据。
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:16px">
+        <div style="border:1px solid var(--red);background:var(--bg2);padding:12px 14px">
+          <div style="color:var(--red);font-weight:bold;margin-bottom:6px">影子判据 1</div>
+          (P₁ ≁ P₂) ∧ (P₁ 不含影子) ⇒ P₂ 含影子
+          <div style="color:var(--textd);font-size:12px;margin-top:6px">已知一个干净周，与它异偏差的周必含影子。</div>
+        </div>
+        <div style="border:1px solid var(--red);background:var(--bg2);padding:12px 14px">
+          <div style="color:var(--red);font-weight:bold;margin-bottom:6px">影子判据 2</div>
+          对于有偏差数据的两个 ε，更小的那个包含影子。
+          <div style="color:var(--textd);font-size:12px;margin-top:6px">用于在两组偏差解之间判断哪一组被“超限修正”污染。</div>
+        </div>
+        <div style="border:1px solid var(--green);background:var(--bg2);padding:12px 14px">
+          <div style="color:var(--green);font-weight:bold;margin-bottom:6px">不含影子的判定</div>
+          (P₁ ~ P₂) ∧ (P₁ ≠ P₂) ⇒ P₁、P₂ 不含影子
+          <div style="color:var(--textd);font-size:12px;margin-top:6px">两个不同价格向量若能用同一 ε 解释，则都不含影子。</div>
+        </div>
+      </div>
+
+      <div style="color:var(--textd);font-size:12px;margin-bottom:8px">// 工具中的落地方式</div>
+      <div style="padding:10px 14px;background:var(--bg3);border-left:2px solid var(--accent);line-height:1.9">
+        1. 先用全局共识找出“一致周”，它们共享同一个 ε，视为干净周。<br>
+        2. 对每个不一致周，用共识 ε 反推 8 个模板的应有价格。<br>
+        3. 能被某个模板解释的天 = 干净天；偏离超过容差的天 = 影子天。<br>
+        4. 影子天不参与 ε 拟合与模板过滤，并给出“实测 → 修正”对照。<br>
+        5. 原始记录永不改写，修正只用于分析与预测。
+      </div>
+
+      <div style="margin-top:14px;padding:10px 14px;border:1px dashed var(--border);color:var(--textd);font-size:12px;line-height:1.8">
+        <strong style="color:var(--accent)">边界说明：</strong>
+        如果某个影子天只被一条记录观测到，没有任何第二周可以对照，它在数学上不可判别；
+        系统不会把它硬标成影子，而会通过“每天至少两周独立观测”的锁定条件避免污染 ε。
+        同理，同一模板重复出现的两周价格完全相同，模板不可辨识，系统会保留候选而不是错误锁定。
       </div>
     </div>
   </div>`;
@@ -338,42 +414,6 @@ function hasCompleteWeek(records, item) {
     .some(r => r.prices.every(p => p != null));
 }
 
-function analyzeItemSafe(records) {
-  if (!records.length) return null;
-
-  const completeRecs  = records.filter(r => r.prices.every(p => p != null));
-  const nearComplRecs = records.filter(r => {
-    const missing = r.prices.filter(p => p == null).length;
-    return missing >= 1 && missing <= 2;
-  });
-
-  if (completeRecs.length === 0 && nearComplRecs.length === 0) {
-    let res = analyzeItem(records);
-    // 强制兜底：没有完整数据时阶段标记收敛中
-    if (res && res.stage === 'locked') res.stage = 'pending';
-    return res;
-  }
-  if (completeRecs.length === records.length) return analyzeItem(records);
-
-  const fitRecs = completeRecs.length > 0 ? completeRecs : nearComplRecs;
-
-  const fitResult  = analyzeItem(fitRecs);
-  const fullResult = analyzeItem(records);
-
-  const hasComplete = records.some(r => r.prices.every(p => p != null));
-
-  let finalResult = null;
-  if (!fullResult || fullResult.stage === 'first_week') finalResult = fitResult || analyzeItem(records);
-  else if (!fitResult  || fitResult.stage  === 'first_week') finalResult = fullResult;
-  else {
-    const fitCand  = fitResult.candidateCount  ?? 8;
-    const fullCand = fullResult.candidateCount ?? 8;
-    finalResult = fullCand <= fitCand ? fullResult : fitResult;
-  }
-
-  if (!hasComplete && finalResult && finalResult.stage === 'locked') {
-    finalResult.stage = 'pending';
-  }
-
-  return finalResult;
-}
+// analyzeItemSafe 已移至 predict-engine.js：
+// 新版 analyzeItem 内置数据提纯、全局 ε 共识、唯一性校验与影子修正，
+// 不再需要“完整周 / 全量数据各跑一次、取候选更少者”的旧策略。

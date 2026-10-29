@@ -28,7 +28,7 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 function renderHome() {
   const accounts = getAccounts();
   const grid = document.getElementById('accountGrid');
-  const cards = accounts.map(acc => {
+  const cards = accounts.map((acc, idx) => {
     const recs = getRecords(acc);
     const items = [...new Set(recs.map(r => r.item))];
     const totalPts = recs.reduce((s,r) => s + r.prices.filter(p=>p!=null).length, 0);
@@ -36,7 +36,7 @@ function renderHome() {
     const created = meta.created ? new Date(meta.created).toLocaleDateString('zh-CN') : '—';
     const itemList = items.length ? items.map(i => esc(i)).join(' · ') : '暂无物品';
     return `<div class="account-card" onclick="openAccount('${esc(acc)}')">
-      <div class="ac-name">${esc(acc)}</div>
+      <div class="ac-name"><span class="ac-no">${String(idx + 1).padStart(2, '0')}</span>${esc(acc)}</div>
       <div class="ac-meta" style="margin-top:8px">${itemList}</div>
       <div class="ac-meta" style="margin-top:6px">${totalPts} 数据点 · ${recs.length} 周记录</div>
       <div class="ac-meta" style="margin-top:4px;color:var(--textd)">创建于 ${created}</div>
@@ -96,6 +96,11 @@ function deleteCurrentAccount() {
     goHome();
   });
 }
+function isTabActive(name) {
+  const el = document.getElementById('tab-' + name);
+  return !!el && el.classList.contains('active');
+}
+
 function updateAccountView() {
   if (!currentAccount) return;
   const recs = getRecords(currentAccount);
@@ -123,10 +128,11 @@ function updateAccountView() {
   if (items.includes(pvi)) { si.value = pvi; dsi.value = pvi; inpi.value = pvi; }
   if (allWeeks.includes(pvw)) { sw.value = pvw; dsw.value = pvw; }
   
+  // 只重绘当前可见的分析/数据页；详情页是静态说明，切换到该 Tab 时再渲染。
+  // 这能避免每次保存都重建整页 HTML 与图表。
   renderTable();
-  renderAnalysis();
-  renderDataTabDetails();
-  renderDetail();
+  if (isTabActive('main')) renderAnalysis();
+  if (isTabActive('data')) renderDataTabDetails();
 }
 function onSelChange() { 
   document.getElementById('data-sel-item').value = document.getElementById('sel-item').value;

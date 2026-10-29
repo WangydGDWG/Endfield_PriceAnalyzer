@@ -113,15 +113,31 @@ function renderTable() {
     const m = w.match(/第\d+周/);
     return m ? m[0] : w;
   }
-  
-  tbody.innerHTML = recs.map(r =>
-    `<tr>
-      <td style="color:var(--textb)">${esc(r.item)}</td>
-      <td style="font-size:13px;color:var(--accent)">${shortWeek(r.week)}</td>
+
+  // 每个物品只分析一次（analyzeItem 内部已有缓存）
+  const fitMap = new Map();
+  const ensureFit = (itemName) => {
+    if (fitMap.has(itemName)) return fitMap.get(itemName);
+    const itemRecs = recsOrig.filter(r => r.item === itemName);
+    const res = itemRecs.length ? analyzeItemSafe(itemRecs) : null;
+    fitMap.set(itemName, res);
+    return res;
+  };
+
+  tbody.innerHTML = recs.map((r, idx) => {
+    const res = ensureFit(r.item);
+    const fit = res && res.weekFits ? res.weekFits[r.week] : null;
+    const shadowDays = fit && Array.isArray(fit.shadowDays) ? fit.shadowDays : [];
+    const shadowBadge = shadowDays.length
+      ? `<span class="shadow-badge" title="${shadowDays.map(d => `${DAYS[d.day]} 实测 ${d.observed.toLocaleString()} → 修正 ${d.corrected.toLocaleString()}`).join('&#10;')}">影 ${shadowDays.length}</span>`
+      : '';
+    return `<tr>
+      <td style="color:var(--textb)"><span class="row-no">${String(idx + 1).padStart(2, '0')}</span>${esc(r.item)}</td>
+      <td style="font-size:13px;color:var(--accent);white-space:nowrap">${shortWeek(r.week)}${shadowBadge}</td>
       ${r.prices.map(p=>`<td style="color:${p!=null?'var(--teal)':'var(--textd)'}">${p!=null?p.toLocaleString():'—'}</td>`).join('')}
       <td><button class="del-btn" onclick="deleteRecord('${esc(r.item)}', '${esc(r.week)}')">✕</button></td>
-    </tr>`
-  ).join('');
+    </tr>`;
+  }).join('');
 }
 
 function deleteRecord(item, week) {
